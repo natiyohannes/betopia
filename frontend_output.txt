@@ -1,0 +1,51 @@
+
+> betopia-property-listing@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3002
+   - Environments: .env.local
+
+ ✓ Ready in 4.7s
+ ○ Compiling / ...
+ ✓ Compiled / in 9.5s (690 modules)
+ ✓ Compiled in 544ms (326 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1510ms (687 modules)
+ ✓ Compiled /not-found in 275ms (692 modules)
+ ○ Compiling /dashboard/my-listings ...
+ ✓ Compiled /dashboard/my-listings in 666ms (729 modules)
+ ○ Compiling /dashboard/bookings ...
+ ✓ Compiled /dashboard/bookings in 580ms (745 modules)
+ ✓ Compiled in 1308ms (754 modules)
+ ○ Compiling /dashboard/saved ...
+ ✓ Compiled /dashboard/saved in 934ms (746 modules)
+ ✓ Compiled in 2.3s (760 modules)
+ ✓ Compiled in 525ms (355 modules)
+ ○ Compiling /dashboard/settings ...
+ ✓ Compiled /dashboard/settings in 1791ms (758 modules)
+ ✓ Compiled /dashboard/payments in 487ms (707 modules)
+ ✓ Compiled /dashboard in 440ms (762 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 550ms (424 modules)
+ ○ Compiling /listings/[id] ...
+ ✓ Compiled /listings/[id] in 15.2s (1973 modules)
+ ✓ Compiled in 2.1s (1966 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ components/listing-card.tsx (142:17) @ Link
+ ⨯ ReferenceError: Link is not defined
+    at ListingCard (./components/listing-card.tsx:228:97)
+[0m [90m 140 |[39m[0m
+[0m [90m 141 |[39m                 {[90m/* Lister Profile */[39m}[0m
+[0m[31m[1m>[22m[39m[90m 142 |[39m                 [33m<[39m[33mLink[39m href[33m=[39m{[32m`/profile/${data.profiles?.id || '#'}`[39m} className[33m=[39m[32m"flex items-center gap-3 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors border border-white/5 group/profile"[39m[33m>[39m[0m
+[0m [90m     |[39m                 [31m[1m^[22m[39m[0m
+[0m [90m 143 |[39m                     [33m<[39m[33mdiv[39m className[33m=[39m[32m"w-10 h-10 rounded-full bg-neutral-800 border border-white/10 overflow-hidden flex-shrink-0"[39m[33m>[39m[0m
+[0m [90m 144 |[39m                         {data[33m.[39mprofiles[33m?[39m[33m.[39mavatar_url [33m?[39m ([0m
+[0m [90m 145 |[39m                             [33m<[39m[33mimg[39m src[33m=[39m{data[33m.[39mprofiles[33m.[39mavatar_url} alt[33m=[39m{data[33m.[39mprofiles[33m.[39mfull_name} className[33m=[39m[32m"w-full h-full object-cover"[39m [33m/[39m[33m>[39m[0m
+ ✓ Compiled in 1854ms (1967 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 1801ms (1953 modules)
+ ○ Compiling /not-found ...
+ ✓ Compiled /not-found in 899ms (1958 modules)

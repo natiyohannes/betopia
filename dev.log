@@ -1,0 +1,128 @@
+
+> betopia-property-listing@0.1.0 dev
+> next dev
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3001
+   - Environments: .env.local
+
+ ✓ Ready in 8.5s
+ ○ Compiling / ...
+ ✓ Compiled / in 7s (676 modules)
+ ✓ Compiled in 834ms (321 modules)
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 1599ms (727 modules)
+ ✓ Compiled in 1637ms (351 modules)
+ ⨯ Error: Cannot find module './638.js'
+Require stack:
+- /Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js
+- /Users/macbookpro2015/betopia.et/.next/server/app/dashboard/page.js
+- /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js
+- /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js
+- /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/utils.js
+- /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/lib/router-server.js
+- /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1421:15)
+    at /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1059:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1064:22)
+    at Module._load (node:internal/modules/cjs/loader:1227:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1504:12)
+    at mod.require (/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at __webpack_require__.f.require (/Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js:198:28)
+    at /Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (/Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (/Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js:162:22)
+    at /Users/macbookpro2015/betopia.et/.next/server/app/page.js:19:6224
+    at Object.<anonymous> (/Users/macbookpro2015/betopia.et/.next/server/app/page.js:19:6285)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14)
+    at Object..js (node:internal/modules/cjs/loader:1893:10)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1504:12)
+    at mod.require (/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at requirePage (/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js:109:84)
+    at /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js:74:84
+    at async loadComponentsImpl (/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js:74:26)
+    at async DevServer.findPageComponentsImpl (/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/next-server.js:675:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js',
+    '/Users/macbookpro2015/betopia.et/.next/server/app/dashboard/page.js',
+    '/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js',
+    '/Users/macbookpro2015/betopia.et/node_modules/next/dist/build/utils.js',
+    '/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/macbookpro2015/betopia.et/node_modules/next/dist/server/lib/start-server.js'
+  ],
+  page: '/'
+}
+ ○ Compiling /not-found ...
+ ✓ Compiled /not-found in 2s (893 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/Users/macbookpro2015/betopia.et/.next/server/vendor-chunks/clsx.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/clsx' in /Users/macbookpro2015/betopia.et/.next/server for build dependencies doesn't lead to expected result '/Users/macbookpro2015/betopia.et/.next/server/vendor-chunks/clsx.js', but to 'Error: Can't resolve './vendor-chunks/clsx' in '/Users/macbookpro2015/betopia.et/.next/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/clsx (expected /Users/macbookpro2015/betopia.et/.next/server/vendor-chunks/clsx.js)
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js
+<w>  at file /Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/.next/server/app/page.js
+<w>  at file /Users/macbookpro2015/betopia.et/.next/server/app/page.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/utils.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/worker.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/worker.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at resolve commonjs /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/class-variance-authority' in /Users/macbookpro2015/betopia.et/.next/server for build dependencies doesn't lead to expected result '/Users/macbookpro2015/betopia.et/.next/server/vendor-chunks/class-variance-authority.js', but to 'Error: Can't resolve './vendor-chunks/class-variance-authority' in '/Users/macbookpro2015/betopia.et/.next/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/class-variance-authority (expected /Users/macbookpro2015/betopia.et/.next/server/vendor-chunks/class-variance-authority.js)
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js
+<w>  at file /Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/.next/server/app/page.js
+<w>  at file /Users/macbookpro2015/betopia.et/.next/server/app/page.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/utils.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/worker.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/worker.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at resolve commonjs /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/tailwind-merge' in /Users/macbookpro2015/betopia.et/.next/server for build dependencies doesn't lead to expected result '/Users/macbookpro2015/betopia.et/.next/server/vendor-chunks/tailwind-merge.js', but to 'Error: Can't resolve './vendor-chunks/tailwind-merge' in '/Users/macbookpro2015/betopia.et/.next/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/tailwind-merge (expected /Users/macbookpro2015/betopia.et/.next/server/vendor-chunks/tailwind-merge.js)
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js
+<w>  at file /Users/macbookpro2015/betopia.et/.next/server/webpack-runtime.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/.next/server/app/page.js
+<w>  at file /Users/macbookpro2015/betopia.et/.next/server/app/page.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/require.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/utils.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/worker.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/worker.js
+<w>  at file dependencies /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at file /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+<w>  at resolve commonjs /Users/macbookpro2015/betopia.et/node_modules/next/dist/build/webpack/loaders/next-route-loader/index.js
+[?25h

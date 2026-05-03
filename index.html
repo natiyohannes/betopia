@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betopia.et | Premium Real Estate Platform</title>
+    <meta name="description"
+        content="Discover your future home with Betopia.et. Immersion 3D tours, seamless payments, and trusted listings in Ethiopia.">
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #ff385c;
+            --primary-dark: #d90b35;
+            --accent: #4cc9f0;
+            --bg: #000000;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-glow: 0 0 10px rgba(255, 56, 92, 0.5);
+            --glass: rgba(255, 255, 255, 0.1);
+            --nav-bg: rgba(0, 0, 0, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: #f8fafc;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* --- UI COMPONENTS --- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 100px;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 40px -10px rgba(255, 56, 92, 0.5);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            background: var(--primary-dark);
+            box-shadow: 0 15px 50px -10px rgba(255, 56, 92, 0.6);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 100px;
+            font-size: 1.1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(255, 56, 92, 0.1);
+            border: 1px solid rgba(255, 56, 92, 0.2);
+            color: var(--primary);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* --- LOADING OVERLAY --- */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 56, 92, 0.2);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            height: 90px;
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .nav-links a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-links a:hover {
+            color: #ff385c;
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #ff385c;
+            border-radius: 2px;
+        }
+
+        /* --- VIEWS --- */
+        .view-container {
+            display: none;
+            min-height: 100vh;
+            padding-top: 100px;
+            padding-bottom: 100px;
+        }
+
+        .view-container.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- LANDING VIEW --- */
+        #home-view {
+            text-align: center;
+        }
+
+        .hero {
+            position: relative;
+            padding: 120px 0 60px;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero h1 {
+            font-size: 5.5rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #ffffff 0%, #a5a5a5 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+        }
+
+        .hero h1 span {
+            -webkit-text-fill-color: initial;
+            color: white;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        /* --- BROWSE VIEW --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2.5rem;
+            margin-top: 4rem;
+        }
+
+        .listing-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .listing-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 56, 92, 0.4);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .listing-image {
+            height: 220px;
+            width: 100%;
+            object-fit: cover;
+            background: #1e293b;
+        }
+
+        .listing-content {
+            padding: 1.5rem;
+        }
+
+        .listing-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .listing-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .listing-location {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+
+        .listing-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.8rem;
+            color: #cbd5e1;
+        }
+
+        /* --- DASHBOARD VIEW --- */
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 20px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        /* --- PRICING & TOGGLE --- */
+        .plan-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .plan-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .plan-card.active {
+            border-color: var(--primary);
+            background: rgba(255, 56, 92, 0.05);
+        }
+
+        .plan-card h4 {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .listing-type-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.4rem;
+            border-radius: 100px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 100px;
+            text-align: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .toggle-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .toggle-btn:not(.active) {
+            color: #64748b;
+        }
+
+        /* Carousel Styles */
+        .listing-image-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .listing-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+
+        .listing-card:hover .carousel-btn {
+            opacity: 1;
+        }
+
+        .carousel-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .carousel-btn.prev {
+            left: 10px;
+        }
+
+        .carousel-btn.next {
+            right: 10px;
+        }
+
+        .listing-badge {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--primary);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            z-index: 5;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        .avatar-circle {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #1e293b, #000);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .avatar-circle:hover {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .notification-bell {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .notification-bell:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            background: #ff385c;
+            border: 2px solid #000;
+            border-radius: 50%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="toast-container"
+        style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container"
+            style="display: flex; align-items: center; justify-content: space-between; width: 100%; position: relative;">
+            <a href="javascript:void(0)" class="logo" onclick="goTo('home')">BETOPIA<span>.ET</span></a>
+
+            <div class="nav-links">
+                <a id="nav-home" onclick="goTo('home')" class="active" data-i18n="nav_find_home">Find a Home</a>
+                <a id="nav-create" onclick="goTo('create')" data-i18n="nav_list_home">List Your Home</a>
+                <a id="nav-bookings" onclick="goTo('dashboard')" data-i18n="nav_bookings">My Bookings</a>
+                <a id="nav-about" onclick="window.open('/about', '_blank')" data-i18n="nav_about">About Us</a>
+            </div>
+
+            <div id="user-nav" style="display: flex; gap: 1rem; align-items: center;">
+                <div class="notification-bell">
+                    <i data-lucide="bell" style="width: 20px; height: 20px;"></i>
+                    <div class="notification-badge"></div>
+                </div>
+                <div class="avatar-circle" onclick="toggleUserDropdown()">
+                    <i data-lucide="user" style="width: 20px; height: 20px;"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Home View -->
+    <section id="home-view" class="view-container active">
+        <!-- Hero Section -->
+        <div
+            style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80'); background-size: cover; background-position: center; min-height: 85vh; display: flex; align-items: center;">
+            <div class="container hero">
+                <h1 data-i18n="hero_title">EVERY SPACE <br> HAS A <span>STORY</span></h1>
+                <p data-i18n="hero_subtitle"
+                    style="color: rgba(255,255,255,0.8); margin-bottom: 3.5rem; max-width: 600px; margin-left: auto; margin-right: auto; font-size: 1.25rem;">
+                    Ethiopia's first fully digital property platform. Direct access to verified listings, immersive
+                    visualization, and seamless transactions.</p>
+                <div style="display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="goTo('browse')" data-i18n="btn_search">Start Searching <i
+                            data-lucide="arrow-right"></i></button>
+                    <button class="btn btn-outline" onclick="goTo('create')" data-i18n="btn_list">List Your
+                        Property</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Homes Section -->
+        <div class="container" style="padding-top: 100px; padding-bottom: 100px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4rem;">
+                <div>
+                    <h2 style="font-size: 3rem; font-weight: 800; margin-bottom: 1rem;" data-i18n="browse_title">
+                        Featured Homes</h2>
+                    <p style="color: #64748b; font-size: 1.1rem;" data-i18n="browse_subtitle">Hand-picked premium
+                        properties across the city.</p>
+                </div>
+                <button class="btn btn-outline" style="padding: 0.75rem 2rem; font-size: 0.9rem;"
+                    onclick="goTo('browse')">View All</button>
+            </div>
+            <div id="featured-grid" class="grid">
+                <!-- Will be populated by fetchListings() -->
+                <div style="grid-column: 1/-1; text-align: center; opacity: 0.5;">Loading featured properties...</div>
+            </div>
+        </div>
+    </section>
+    </section>
+
+    <!-- Browse View -->
+    <section id="browse-view" class="view-container">
+        <div class="container">
+            <div
+                style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="font-size: 3rem; margin-bottom: 1.5rem;" data-i18n="browse_title">Available Homes</h2>
+                    <p style="color: #94a3b8; font-size: 1.1rem; max-width: 600px; margin: 0 auto 4rem;"
+                        data-i18n="browse_subtitle">Discover curated
+                        properties across Addis Ababa.</p>
+                </div>
+            </div>
+
+            <div id="listings-grid" class="grid">
+                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">Loading properties...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard View -->
+    <section id="dashboard-view" class="view-container">
+        <div class="container">
+            <h2 style="font-size: 3rem; margin-bottom: 2rem;" data-i18n="dashboard_title">Platform Dashboard</h2>
+            <div class="dash-grid">
+                <div class="stat-card">
+                    <span id="stat-total" class="stat-value">0</span>
+                    <span class="stat-label" data-i18n="dash_listings">Total Listings</span>
+                </div>
+                <div class="stat-card">
+                    <span id="stat-views" class="stat-value">0</span>
+                    <span class="stat-label" data-i18n="dash_views">Active Views</span>
+                </div>
+                <div class="stat-card">
+                    <span id="stat-volume" class="stat-value" style="font-size: 2rem; color: #4cc9f0;">ETB 0</span>
+                    <span class="stat-label" data-i18n="dash_volume">Total Volume</span>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h3 style="margin: 0;" data-i18n="dash_my_listings">My Listed Properties</h3>
+                <button class="btn btn-primary" onclick="goTo('create')"
+                    style="padding: 0.5rem 1.5rem; font-size: 0.85rem;" data-i18n="dash_new">+ New Property</button>
+            </div>
+            <div id="my-listings-grid" class="grid"
+                style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+                <div style="grid-column: 1/-1; text-align: center; opacity: 0.5;">Login to see your properties.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Create View -->
+    <section id="create-view" class="view-container">
+        <div class="container" style="max-width: 800px;">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <span class="badge" style="margin-bottom: 1rem;" data-i18n="hero_badge">Submission Portal</span>
+                <h2 style="font-size: 3.5rem; margin-bottom: 0.5rem;" data-i18n="create_title">Describe Your Property
+                </h2>
+                <p style="color: #94a3b8;" data-i18n="browse_subtitle">Provide the details below to reach thousands of
+                    potential residents.</p>
+            </div>
+
+            <form id="create-form"
+                style="background: var(--card-bg); padding: 3rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1);">
+
+                <h2 style="margin-bottom: 2rem; color: var(--accent);" data-i18n="create_step2">Step 2: Enter
+                    Details</h2>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 1rem; color: #94a3b8; margin-bottom: 0.5rem;"
+                            data-i18n="lbl_price">Listing
+                            Price (ETB)</label>
+                        <input type="number" id="form-price" placeholder="e.g. 50000" required
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1.25rem; border-radius: 12px; color: white; font-size: 1.1rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 1rem; color: #94a3b8; margin-bottom: 0.5rem;"
+                            data-i18n="lbl_type">Property Type</label>
+                        <select id="form-type"
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1.25rem; border-radius: 12px; color: white; font-size: 1.1rem; appearance: none;">
+                            <option value="apartment" style="color: black;">Apartment</option>
+                            <option value="house" style="color: black;">House</option>
+                            <option value="villa" style="color: black;">Villa</option>
+                            <option value="condo" style="color: black;">Condo</option>
+                            <option value="land" style="color: black;">Land</option>
+                            <option value="commercial" style="color: black;">Commercial</option>
+                            <option value="office" style="color: black;">Office</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 1rem; color: #94a3b8; margin-bottom: 0.5rem;"
+                        data-i18n="lbl_contract">Contract
+                        Type</label>
+                    <div class="listing-type-toggle" style="margin-bottom: 0; display: flex; gap: 1rem;">
+                        <div id="contract-rent" class="toggle-btn active" onclick="setContract('rent', this)"
+                            style="flex: 1; text-align: center;">
+                            For Rent</div>
+                        <div id="contract-sale" class="toggle-btn" onclick="setContract('sale', this)"
+                            style="flex: 1; text-align: center;">
+                            For Sale</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 1rem; color: #94a3b8; margin-bottom: 0.5rem;">Property
+                            Title</label>
+                        <input type="text" id="form-title" placeholder="e.g. Modern 3-Bedroom Apartment in Bole"
+                            required
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1.25rem; border-radius: 12px; color: white; font-size: 1.1rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 0.5rem;">Phone
+                            Number</label>
+                        <input type="tel" id="form-phone" placeholder="e.g. 0911223344" required
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;"
+                            data-i18n="lbl_city">City</label>
+                        <input type="text" id="form-city" value="Addis Ababa" required
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;"
+                            data-i18n="lbl_neighborhood">Neighborhood</label>
+                        <input type="text" id="form-neighborhood" placeholder="e.g. Bole" required
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;"
+                            data-i18n="lbl_beds">Beds</label>
+                        <input type="number" id="form-beds" value="2"
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;"
+                            data-i18n="lbl_baths">Baths</label>
+                        <input type="number" id="form-baths" value="2"
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;"
+                            data-i18n="lbl_sqm">SQM</label>
+                        <input type="number" id="form-sqm" value="120"
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 0.5rem;"
+                        data-i18n="lbl_images">Property Photos</label>
+                    <input type="file" id="form-images" multiple accept="image/*"
+                        style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
+                        Normal Plan: Max 5 images | 3D AI Plan: Max 20 images
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 0.5rem;"
+                        data-i18n="lbl_desc">Detailed
+                        Description</label>
+                    <textarea id="form-desc" rows="4"
+                        placeholder="Describe the key features, amenities, and nearby landmarks..."
+                        style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.25rem;">Confirm & Pay
+                    to
+                    Publish <i data-lucide="credit-card"></i></button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Auth View -->
+    <section id="auth-view" class="view-container">
+        <div class="container" style="max-width: 450px;">
+            <div
+                style="background: var(--card-bg); padding: 3rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                <h2 id="auth-title" style="font-size: 2.5rem; margin-bottom: 1rem;" data-i18n="auth_welcome">Welcome
+                    Back</h2>
+                <p id="auth-subtitle" style="color: #94a3b8; margin-bottom: 2rem;" data-i18n="auth_sub_login">Sign in to
+                    manage your listings.</p>
+
+                <form id="auth-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                    <div id="auth-phone-container" style="display: none;">
+                        <input type="tel" id="auth-phone" placeholder="Phone Number"
+                            style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    </div>
+                    <input type="email" id="auth-email" placeholder="Email Address" required
+                        style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    <input type="password" id="auth-password" placeholder="Password" required
+                        style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    <button type="submit" id="auth-submit" class="btn btn-primary" style="width: 100%;"
+                        data-i18n="btn_signin">Sign In</button>
+
+                    <div style="display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0;">
+                        <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.05);"></div>
+                        <span style="color: #64748b; font-size: 0.8rem;" data-i18n="or">OR</span>
+                        <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.05);"></div>
+                    </div>
+
+                    <button type="button" id="google-signin-btn" class="btn btn-outline"
+                        style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75rem; border-radius: 12px; font-weight: 500;"
+                        data-i18n="btn_google">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9105 17.5885 17.1581 16.3214 17.9839V21.0547H20.1901C22.4608 18.9688 23.766 15.9083 23.766 12.2764Z"
+                                fill="#4285F4" />
+                            <path
+                                d="M12.24 24.0008C15.4765 24.0008 18.2059 22.9382 20.1945 21.0547L16.3258 17.9839C15.2543 18.715 13.8645 19.1119 12.2445 19.1119C9.12121 19.1119 6.47446 17.0601 5.5222 14.2819H1.54309V17.3612C3.55371 21.3533 7.67746 24.0008 12.24 24.0008Z"
+                                fill="#34A853" />
+                            <path
+                                d="M5.5222 14.2819C5.27746 13.5537 5.14321 12.7819 5.14321 11.9999C5.14321 11.2178 5.27746 10.446 5.5222 9.71781V6.63855H1.54309C0.708955 8.24912 0.24 10.0631 0.24 11.9999C0.24 13.9367 0.708955 15.7506 1.54309 17.3612L5.5222 14.2819Z"
+                                fill="#FBBC05" />
+                            <path
+                                d="M12.24 4.88807C14.0074 4.88807 15.5849 5.48507 16.8299 6.64951L20.2793 3.19336C18.2014 1.24445 15.4721 0 12.24 0C7.67746 0 3.55371 2.64753 1.54309 6.63855L5.5222 9.71781C6.47446 6.93951 9.12121 4.88807 12.24 4.88807Z"
+                                fill="#EA4335" />
+                        </svg>
+                        Continue with Google
+                    </button>
+
+                    <button type="button" id="demo-login-btn" class="btn btn-primary"
+                        style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; font-weight: 600;"
+                        data-i18n="btn_demo">
+                        ⚡ Quick Demo Access
+                    </button>
+                </form>
+
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <p id="auth-toggle-text" style="color: #64748b; font-size: 0.9rem;" data-i18n="auth_no_account">
+                        Don't have an account? <a href="javascript:void(0)" onclick="toggleAuth()"
+                            style="color: var(--primary); text-decoration: none; font-weight: 600;">Sign Up</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+        <div
+            style="background: var(--card-bg); padding: 3rem; border-radius: 32px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 450px; text-align: center; margin: 1rem;">
+            <div
+                style="background: #ff385c; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                <i data-lucide="credit-card" style="color: white; width: 32px; height: 32px;"></i>
+            </div>
+            <h2 style="margin-bottom: 0.5rem;">Payrify Payment</h2>
+            <p style="color: #94a3b8; margin-bottom: 2rem;">Securely pay through Payrify to publish your listing.</p>
+
+            <div
+                style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1); margin-bottom: 2rem;">
+                <span style="display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem;">Amount to
+                    Pay</span>
+                <span id="modal-amount" style="font-size: 2rem; font-weight: 800; color: white;">150 ETB</span>
+
+                <a href="https://payrify.et/pay/dPbpe75UJtnvNXhr" target="_blank" class="btn btn-primary"
+                    style="margin-top: 1rem; width: 100%; display: inline-block;">
+                    Pay Now <i data-lucide="external-link"
+                        style="width: 16px; height: 16px; margin-left: 8px; vertical-align: middle;"></i>
+                </a>
+                <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 1rem;">Click Pay Now to authorize payment, then
+                    return here to verify.</p>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 2rem;">
+                <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.5rem;">Enter
+                    Transaction ID</label>
+                <div style="position: relative;">
+                    <input type="text" id="transaction-id" placeholder="e.g. TXN-12345678"
+                        style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: white;">
+                    <i data-lucide="help-circle"
+                        style="position: absolute; right: 12px; top: 12px; color: #64748b; cursor: pointer;"
+                        onclick="alert('Enter the transaction ID received from Payrify.')"></i>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button class="btn btn-outline" style="border-radius: 100px;" onclick="closePayment()">Cancel</button>
+                <button id="verify-btn" class="btn btn-primary" style="border-radius: 100px;"
+                    onclick="verifyPayment()">Verify & Publish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+        style="margin-top: 100px; padding: 4rem 0; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; color: #64748b;">
+        <div class="container">
+            <p data-i18n="footer_text">© 2026 Betopia.et • Designed for Ethiopia.</p>
+        </div>
+    </footer>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const SB_URL = "https://nujnunsareitpcaegbcu.supabase.co";
+        const SB_KEY = "sb_publishable_IBwnUC53bP7Y-oA6RwWgJA_WnuRDJoj";
+        // Removed Payify configuration as requested
+
+        let sb = null;
+        try {
+            sb = supabase.createClient(SB_URL, SB_KEY);
+            console.log('Supabase initialized');
+        } catch (e) {
+            console.warn('Supabase init failed, using demo mode:', e);
+        }
+
+        // ============================================
+        // STATE
+        // ============================================
+        let currentUser = null;
+        let currentView = 'home';
+        let authMode = 'login';
+        let currentPlan = { type: 'monthly', price: 150 };
+        let currentType = 'normal';
+        let currentContract = 'rent';
+        let pendingListingData = null;
+        let currentLang = 'en';
+
+        // ============================================
+        // TRANSLATIONS
+        // ============================================
+        const translations = {
+            en: {
+                nav_find_home: "Find a Home",
+                nav_list_home: "List Your Home",
+                nav_bookings: "My Bookings",
+                nav_about: "About Us",
+                hero_title: "EVERY SPACE <br> HAS A <span>STORY</span>",
+                hero_subtitle: "Ethiopia's first fully digital property platform. Direct access to verified listings, immersive visualization, and seamless transactions.",
+                btn_search: "Start Searching",
+                btn_list: "List Your Property",
+                stat_map: "Interactive Map",
+                stat_map_desc: "Find properties exactly where you want to live with our visual pinning system.",
+                stat_verified: "Verified Only",
+                stat_verified_desc: "No fake ads. Every listing is checked by our admin board before going live.",
+                stat_pay: "Payrify Ready",
+                stat_pay_desc: "Easiest way to pay for listing spots or book properties instantly.",
+                browse_title: "Available Homes",
+                browse_subtitle: "Discover curated properties across Addis Ababa.",
+                dashboard_title: "Platform Dashboard",
+                dash_listings: "Total Listings",
+                dash_views: "Active Views",
+                dash_volume: "Total Volume",
+                dash_my_listings: "My Listed Properties",
+                dash_new: "+ New Property",
+                auth_welcome: "Welcome Back",
+                auth_join: "Join Betopia.et",
+                auth_sub_login: "Sign in to manage your listings.",
+                auth_sub_signup: "Create an account to publish properties.",
+                lbl_email: "Email Address",
+                lbl_pass: "Password",
+                lbl_phone: "Phone Number",
+                btn_signin: "Sign In",
+                btn_signup: "Sign Up",
+                or: "OR",
+                btn_google: "Continue with Google",
+                btn_demo: "⚡ Quick Demo Access",
+                auth_no_account: "Don't have an account?",
+                auth_has_account: "Already have an account?",
+                create_title: "Rent or Sell Your Home",
+                create_step1: "1. Choose Your Plan",
+                plan_normal: "Normal Listing",
+                plan_normal_desc: "Standard for fast sale/rent",
+                plan_3d: "AI 3D Experience",
+                plan_3d_desc: "Full immersive walkthrough",
+                create_step2: "Property Information",
+                lbl_prop_title: "Property Title",
+                lbl_price: "Price (ETB)",
+                lbl_city: "City",
+                lbl_neighborhood: "Neighborhood",
+                lbl_type: "Property Type",
+                lbl_contract: "Contract Type",
+                lbl_desc: "Detailed Description",
+                lbl_images: "Property Photos",
+                btn_publish: "Confirm and Pay to Publish",
+                badge_rent: "FOR RENT",
+                badge_sale: "FOR SALE",
+                type_apartment: "Apartment",
+                type_house: "House",
+                type_villa: "Villa",
+                type_condo: "Condo",
+                type_land: "Land",
+                type_commercial: "Commercial",
+                type_office: "Office",
+                lbl_beds: "Beds",
+                lbl_baths: "Baths",
+                lbl_sqm: "SQM",
+                footer_text: "© 2026 Betopia.et • Designed for Ethiopia."
+            },
+            am: {
+                nav_find_home: "ቤት ይፈልጉ",
+                nav_list_home: "ቤትዎን ያስመዝግቡ",
+                nav_bookings: "የእኔ ዝርዝሮች",
+                nav_about: "ስለ እኛ",
+                hero_title: "እያንዳንዱ ቦታ <br> የራሱ <span>ታሪክ አለው</span>",
+                hero_subtitle: "የኢትዮጵያ የመጀመሪያው ሙሉ በሙሉ ዲጂታል የንብረት መድረክ። የተረጋገጡ ዝርዝሮች፣ ጥልቅ እይታ እና ቀላል ግብይቶች።",
+                btn_search: "ፍለጋ ይጀምሩ",
+                btn_list: "ንብረትዎን ያስመዝግቡ",
+                stat_map: "ኢንተራክቲቭ ካርታ",
+                stat_map_desc: "በእይታ ካርታችን መኖር የሚፈልጉበትን ቦታ በትክክል ያግኙ።",
+                stat_verified: "የተረጋገጠ ብቻ",
+                stat_verified_desc: "ምንም የሐሰት ማስታወቂያ የለም። እያንዳንዱ ንብረት ከመታተሙ በፊት በኛ ይረጋገጣል።",
+                stat_pay: "በቴሌቢር ዝግጁ",
+                stat_pay_desc: "ለማስታወቂያ ቦታዎች ለመክፈል ወይም ንብረቶች ወዲያውኑ ለመያዝ ቀላሉ መንገድ።",
+                browse_title: "የሚገኙ ቤቶች",
+                browse_subtitle: "አዲስ አበባ ውስጥ የተመረጡ ንብረቶችን ይመልከቱ።",
+                dashboard_title: "ዳሽቦርድ",
+                dash_listings: "ጠቅላላ ንብረቶች",
+                dash_views: "ንቁ እይታዎች",
+                dash_volume: "ጠቅላላ መጠን",
+                dash_my_listings: "የእኔ ንብረቶች",
+                dash_new: "+ አዲስ ንብረት",
+                auth_welcome: "እንኳን ደህና መጡ",
+                auth_join: "ቤቶፒያ ይቀላቀሉ",
+                auth_sub_login: "ንብረቶችዎን ለማስተዳደር ይግቡ።",
+                auth_sub_signup: "ንብረቶችን ለማተም አካውንት ይፍጠሩ።",
+                lbl_email: "ኢሜይል አድራሻ",
+                lbl_pass: "የይለፍ ቃል",
+                lbl_phone: "የስልክ ቁጥር",
+                btn_signin: "ይግቡ",
+                btn_signup: "ይመዝገቡ",
+                or: "ወይም",
+                btn_google: "በጉግል ይቀጥሉ",
+                btn_demo: "⚡ ፈጣን ዴሞ መዳረሻ",
+                auth_no_account: "አካውንት የለዎትም?",
+                auth_has_account: "አካውንት አለዎት?",
+                create_title: "ቤትዎን ያከራዩ ወይም ይሽጡ",
+                create_step1: "ደረጃ 1፡ ፕላን ይምረጡ",
+                plan_normal: "ተራ ምዝገባ",
+                plan_normal_desc: "ለፈጣን ሽያጭ/ኪራይ",
+                plan_3d: "የAI 3D ተሞክሮ",
+                plan_3d_desc: "ሙሉ ጥልቅ እይታ",
+                create_step2: "ደረጃ 2፡ የቤት መረጃ ያስገቡ",
+                lbl_prop_title: "የንብረት ርዕስ",
+                lbl_price: "ዋጋ (ETB)",
+                lbl_city: "ከተማ",
+                lbl_neighborhood: "ሰፈር",
+                lbl_type: "የንብረት ዓይነት",
+                lbl_contract: "የውል ዓይነት",
+                lbl_desc: "ዝርዝር መግለጫ",
+                lbl_images: "የንብረት ፎቶዎች",
+                btn_publish: "ለማተም ያረጋግጡ እና ይክፈሉ",
+                badge_rent: "የሚከራይ",
+                badge_sale: "የሚሸጥ",
+                type_apartment: "አፓርታማ",
+                type_house: "ቤት",
+                type_villa: "ቪላ",
+                type_condo: "ኮንዶሚኒየም",
+                type_land: "መሬት",
+                type_commercial: "ንግድ ቦታ",
+                type_office: "ቢሮ",
+                lbl_beds: "ኝታ ቤት",
+                lbl_baths: "መታጠቢያ",
+                lbl_sqm: "ካሬ ሜትር",
+                footer_text: "© 2026 Betopia.et • የተነደፈው ለኢትዮጵያ።"
+            },
+            or: {
+                nav_home: "Man'ee",
+                nav_browse: "Barbaadi",
+                nav_dashboard: "Daashboordii",
+                nav_list: "+ Qabeenya Galmeessi",
+                hero_badge: "Real Estate Haaromfame",
+                hero_title: "Ogummaan Bu'uura <br> Manneen <span>Hundaa Ti</span>",
+                hero_subtitle: "Platformii qabeenyaa dijitaalaa kan jalqabaa Itoophiyaa keessatti. Odeeffannoo qulqulluu, ilaallii gad-fagoo fi tajaajila saffisaa.",
+                btn_search: "Barbaacha Eegali",
+                btn_list: "Qabeenya Keessan Galmeessaa",
+                stat_map: "Kaartaa Interaktiivii",
+                stat_map_desc: "Sirna pinniingii keenyaan bakka jiraachuu fettan sirriitti argadhaa.",
+                stat_verified: "Mirkanaa'e Qofa",
+                stat_verified_desc: "Beeksisa sobaa hin jiru. Gabaasni hunduu dura boordii keenyaan mirkanaa'a.",
+                stat_pay: "Kaffaluudhaaf qophii",
+                stat_pay_desc: "Bakka beeksisaa kaffaluuf ykn qabeenya qabuuf karaa salphaa.",
+                browse_title: "Manneen Jiran",
+                browse_subtitle: "Addis Ababaa keessatti qabeenyota filataman argu.",
+                dashboard_title: "Daashboordii Platformii",
+                dash_listings: "Waliigala Qabeenyaa",
+                dash_views: "Ilaalcha Aktiivii",
+                dash_volume: "Waliigala Gatii",
+                dash_my_listings: "Qabeenyota Ani Galmeesse",
+                dash_new: "+ Qabeenya Haaraa",
+                auth_welcome: "Baga Nagaan Dhufte",
+                auth_join: "Betopia.et Tiru",
+                auth_sub_login: "Galmaa'i qabeenya kee bulchuuf.",
+                auth_sub_signup: "Akkaawuntii uumi qabeenya galmeessuuf.",
+                lbl_email: "Imeeyilii",
+                lbl_pass: "Jecha Icchitii",
+                lbl_phone: "Lakkoofsa Bilbilaa",
+                btn_signin: "Seeni",
+                btn_signup: "Galmaa'i",
+                or: "YOKIIN",
+                btn_google: "Google'n Itti Fufi",
+                btn_demo: "⚡ Seensa Deemoo Saffisaa",
+                auth_no_account: "Akkaawuntii hin qabduu?",
+                auth_has_account: "Duraan akkaawuntii qabduu?",
+                create_title: "Mana Kee Kireessi ykn Gurguri",
+                create_step1: "1. Karoora Kee Filadhu",
+                plan_normal: "Galmeessa Idilee",
+                plan_normal_desc: "Gurgurtaaf/kiraaf saffisaa",
+                plan_3d: "Muuxannoo AI 3D",
+                plan_3d_desc: "Ilaalcha guutuu fi gad-fagoo",
+                create_step2: "Odeeffannoo Qabeenyaa",
+                lbl_prop_title: "Mata-duree Qabeenyaa",
+                lbl_price: "Gatii (ETB)",
+                lbl_city: "Magala",
+                lbl_neighborhood: "Ganda",
+                lbl_type: "Gosa Qabeenyaa",
+                lbl_contract: "Gosa Waliigaltee",
+                lbl_desc: "Ibsa Bal'aa",
+                lbl_images: "Suuraalee Qabeenyaa",
+                btn_publish: "Mirkaneessi fi Kaffali",
+                badge_rent: "KIRAAF",
+                badge_sale: "GURGURTAAF",
+                type_apartment: "Appartamaa",
+                type_house: "Mana",
+                type_villa: "Viillaa",
+                type_condo: "Kondoominiyeemii",
+                type_land: "Lafa",
+                type_commercial: "Nageenya",
+                type_office: "Waajjira",
+                lbl_beds: "Siree",
+                lbl_baths: "Bishaan",
+                lbl_sqm: "SQM",
+                footer_text: "© 2026 Betopia.et • Itoophiyaaf kan dizaayini godhame."
+            },
+            ti: {
+                nav_home: "መራኸብ",
+                nav_browse: "ድለይ",
+                nav_dashboard: "ዳሽቦርድ",
+                nav_list: "+ ንብረት መዝግብ",
+                hero_badge: "ሪል እስቴት ሓድሽ",
+                hero_title: "ጥበብ መሰረት <br> ኩሉ <span>ገዛ እዩ</span>",
+                hero_subtitle: "ናይ ኢትዮጵያ ፈላማይ ዲጂታል ፕላትፎርም ንብረት። ዝተረጋገጹ ዝርዝራት፣ ዓሚቝ ምርኢት፣ ቅልጡፍ ግልጋሎት።",
+                btn_search: "ምድላይ ጀምር",
+                btn_list: "ንብረትካ መዝግብ",
+                stat_map: "ኢንተራክቲቭ ካርታ",
+                stat_map_desc: "ብናይ ምርእይ ካርታና ክትነብረሉ ትደሊ ቦታ ብልክዕ ረኸብ።",
+                stat_verified: "ዝተረጋገጸ ጥራይ",
+                stat_verified_desc: "ሓሶት ማስታወቂያ የለን። ቅድሚ ምሕታሙ ብማእከልና ይረጋገጽ።",
+                stat_pay: "ብተሌቢር ድሉው",
+                stat_pay_desc: "ንማስታወቂያ ቦታ ንምኽፋል ወይ ንብረት ንመትሓዝ ዝቐለለ መገዲ።",
+                browse_title: "ዘለዉ ኣባይቲ",
+                browse_subtitle: "ኣብ ኣዲስ ኣበባ ዘለዉ ዝተመርጹ ንብረታት ርአ።",
+                dashboard_title: "ዳሽቦርድ",
+                dash_listings: "ጠቕላላ ንብረታት",
+                dash_views: "ንቑሕ ምርኢት",
+                dash_volume: "ጠቕላላ መጠን",
+                dash_my_listings: "ዝመዝገብኩዎም ንብረታት",
+                dash_new: "+ ሓድሽ ንብረት",
+                auth_welcome: "እንቋዕ ብደሓን መጻእኹም",
+                auth_join: "ቤቶፒያ ተጸንበሩ",
+                auth_sub_login: "ንብረትካ ንምምሕዳር ብመጀመርታ እቶ።",
+                auth_sub_signup: "ንብረት ንምምዝጋብ ኣካውንት ፍጠር።",
+                lbl_email: "ኢሜይል",
+                lbl_pass: "መለለዩ ቓል",
+                lbl_phone: "ቑፅሪ ስልኪ",
+                btn_signin: "እቶ",
+                btn_signup: "ተመዝገብ",
+                or: "ወይ",
+                btn_google: "ብጉግል ቀጽል",
+                btn_demo: "⚡ ቅልጡፍ ዴሞ መእተዊ",
+                auth_no_account: "ኣካውንት የብልካን?",
+                auth_has_account: "ኣካውንት ኣለካዶ?",
+                create_title: "ገዛኻ ኣካርይ ወይ ሸይጥ",
+                create_step1: "1. ፕላንካ ምረጽ",
+                plan_normal: "ተራ ምዝገባ",
+                plan_normal_desc: "ንቕልጡፍ መሸጣ/ክራይ",
+                plan_3d: "ናይ AI 3D ተሞክሮ",
+                plan_3d_desc: "ምሉእ ዓሚቝ ምርኢት",
+                create_step2: "መረዳእታ ንብረት",
+                lbl_prop_title: "ርእሰ-አርእስቲ ንብረት",
+                lbl_price: "ዋጋ (ETB)",
+                lbl_city: "ከተማ",
+                lbl_neighborhood: "ሰፈር",
+                lbl_type: "ዓይነት ንብረት",
+                lbl_contract: "ዓይነት ውዕል",
+                lbl_desc: "ዝርዝር መግለጫ",
+                lbl_images: "ስእልታት ንብረት",
+                btn_publish: "ንጥሕተ-ቅርጺ ኣረጋግጽን ክፈልን",
+                badge_rent: "ዝካረ",
+                badge_sale: "ዝሽየጥ",
+                type_apartment: "አፓርታማ",
+                type_house: "ገዛ",
+                type_villa: "ቪላ",
+                type_condo: "ኮንዶሚኒየም",
+                type_land: "መሬት",
+                type_commercial: "ንግዲ ቦታ",
+                type_office: "ቤት ጽሕፈት",
+                lbl_beds: "መደቀሲ",
+                lbl_baths: "መሕጸቢ",
+                lbl_sqm: "ስኩየር ሜተር",
+                footer_text: "© 2026 Betopia.et • ንኢትዮጵያ ዝተዳለወ።"
+            },
+            fr: {
+                nav_home: "Accueil",
+                nav_browse: "Parcourir",
+                nav_dashboard: "Tableau de bord",
+                nav_list: "+ Publier une propriété",
+                hero_badge: "L'immobilier réinventé",
+                hero_title: "L'intelligence est la <br> fondation de <span>chaque maison</span>",
+                hero_subtitle: "La première plateforme immobilière entièrement numérique d'Éthiopie. Accès direct à des annonces vérifiées, visualisation immersive et transactions fluides.",
+                btn_search: "Commencer la recherche",
+                btn_list: "Publier votre bien",
+                stat_map: "Carte Interactive",
+                stat_map_desc: "Trouvez des propriétés exactement où vous voulez vivre avec notre système d'épinglage visuel.",
+                stat_verified: "Vérifié Uniquement",
+                stat_verified_desc: "Pas de fausses annonces. Chaque annonce est vérifiée par notre comité d'administration avant d'être mise en ligne.",
+                stat_pay: "Prêt à payer",
+                stat_pay_desc: "Le moyen le plus simple de payer pour des places d'annonce ou de réserver des propriétés instantanément.",
+                browse_title: "Maisons Disponibles",
+                browse_subtitle: "Découvrez des propriétés sélectionnées à travers Addis-Abeba.",
+                dashboard_title: "Tableau de Bord",
+                dash_listings: "Total des Annonces",
+                dash_views: "Vues Actives",
+                dash_volume: "Volume Total",
+                dash_my_listings: "Mes Propriétés Listées",
+                dash_new: "+ Nouvelle Propriété",
+                auth_welcome: "Bienvenue",
+                auth_join: "Rejoignez Betopia.et",
+                auth_sub_login: "Connectez-vous pour gérer vos annonces.",
+                auth_sub_signup: "Créez un compte pour publier des propriétés.",
+                lbl_email: "Adresse Email",
+                lbl_pass: "Mot de passe",
+                lbl_phone: "Numéro de téléphone",
+                btn_signin: "Se Connecter",
+                btn_signup: "S'inscrire",
+                or: "OU",
+                btn_google: "Continuer avec Google",
+                btn_demo: "⚡ Accès Démo Rapide",
+                auth_no_account: "Pas de compte ?",
+                auth_has_account: "Vous avez déjà un compte ?",
+                create_title: "Louer ou Vendre votre Maison",
+                create_step1: "1. Choisissez votre plan",
+                plan_normal: "Liste Normale",
+                plan_normal_desc: "Standard pour vente/location rapide",
+                plan_3d: "Expérience IA 3D",
+                plan_3d_desc: "Visite immersive complète",
+                create_step2: "Information sur la propriété",
+                lbl_prop_title: "Titre de la Propriété",
+                lbl_price: "Prix (ETB)",
+                lbl_city: "Ville",
+                lbl_neighborhood: "Quartier",
+                lbl_desc: "Description Détaillée",
+                lbl_images: "Photos de la Propriété",
+                btn_publish: "Confirmer et Payer pour Publier",
+                badge_rent: "À LOUER",
+                badge_sale: "À VENDRE",
+                type_apartment: "Appartement",
+                type_house: "Maison",
+                type_villa: "Villa",
+                type_condo: "Condo",
+                type_land: "Terrain",
+                type_commercial: "Commercial",
+                type_office: "Bureau",
+                lbl_beds: "Chambres",
+                lbl_baths: "Bains",
+                lbl_sqm: "M²",
+                footer_text: "© 2026 Betopia.et • Conçu pour l'Éthiopie."
+            },
+            es: {
+                nav_home: "Inicio",
+                nav_browse: "Explorar",
+                nav_dashboard: "Panel",
+                nav_list: "+ Publicar Propiedad",
+                hero_badge: "Bienes Raíces Reinventados",
+                hero_title: "La inteligencia es el <br> cimiento de <span>cada hogar</span>",
+                hero_subtitle: "La primera plataforma inmobiliaria totalmente digital de Etiopía. Acceso directo a listados verificados, visualización inmersiva y transacciones fluidas.",
+                btn_search: "Empezar a buscar",
+                btn_list: "Publica tu Propiedad",
+                stat_map: "Mapa Interactivo",
+                stat_map_desc: "Encuentra propiedades exactamente donde quieres vivir con nuestro sistema de pines visuales.",
+                stat_verified: "Solo Verificados",
+                stat_verified_desc: "Sin anuncios falsos. Cada listado es verificado por nuestro comité de administración antes de publicarse.",
+                stat_pay: "Listo para pagar",
+                stat_pay_desc: "La forma más sencilla de pagar por espacios de anuncios o reservar propiedades al instante.",
+                browse_title: "Casas Disponibles",
+                browse_subtitle: "Descubre propiedades seleccionadas en todo Addis Abeba.",
+                dashboard_title: "Panel de la Plataforma",
+                dash_listings: "Total de Listados",
+                dash_views: "Vistas Activas",
+                dash_volume: "Volumen Total",
+                dash_my_listings: "Mis Propiedades Listadas",
+                dash_new: "+ Nueva Propiedad",
+                auth_welcome: "Bienvenido",
+                auth_join: "Únete a Betopia.et",
+                auth_sub_login: "Inicia sesión para gestionar tus listados.",
+                auth_sub_signup: "Crea una cuenta para publicar propiedades.",
+                lbl_email: "Dirección de Correo",
+                lbl_pass: "Contraseña",
+                lbl_phone: "Número de Teléfono",
+                btn_signin: "Iniciar Sesión",
+                btn_signup: "Registrarse",
+                or: "O",
+                btn_google: "Continuar con Google",
+                btn_demo: "⚡ Acceso Rápido Demo",
+                auth_no_account: "¿No tienes cuenta?",
+                auth_has_account: "¿Ya tienes cuenta?",
+                create_title: "Alquilar o Vender tu Casa",
+                create_step1: "1. Elige tu plan",
+                plan_normal: "Listado Normal",
+                plan_normal_desc: "Estándar para venta/alquiler rápido",
+                plan_3d: "Experiencia IA 3D",
+                plan_3d_desc: "Recorrido inmersivo completo",
+                create_step2: "Información de la Propiedad",
+                lbl_prop_title: "Título de la Propiedad",
+                lbl_price: "Precio (ETB)",
+                lbl_city: "Ciudad",
+                lbl_neighborhood: "Barrio",
+                lbl_type: "Tipo de Propiedad",
+                lbl_contract: "Tipo de Contrato",
+                lbl_desc: "Descripción Detallada",
+                lbl_images: "Fotos de la Propiedad",
+                btn_publish: "Confirmar y Pagar para Publicar",
+                badge_rent: "EN ALQUILER",
+                badge_sale: "EN VENTA",
+                type_apartment: "Apartamento",
+                type_house: "Casa",
+                type_villa: "Chalet",
+                type_condo: "Condominio",
+                type_land: "Terreno",
+                type_commercial: "Comercial",
+                type_office: "Oficina",
+                lbl_beds: "Habitaciones",
+                lbl_baths: "Baños",
+                lbl_sqm: "M²",
+                footer_text: "© 2026 Betopia.et • Diseñado para Etiopía."
+            }
+        };
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('betopia_lang', lang);
+            document.documentElement.lang = lang; // Essential for accessibility & auto-translate
+
+            const selector = document.getElementById('lang-selector');
+            if (selector) selector.value = lang;
+
+            const texts = translations[lang];
+            if (!texts) return;
+
+            // Update elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (texts[key]) {
+                    if (key === 'hero_title') {
+                        el.innerHTML = texts[key];
+                    } else if (key === 'auth_no_account' || key === 'auth_has_account') {
+                        const linkText = authMode === 'login' ? (texts['btn_signup'] || 'Sign Up') : (texts['btn_signin'] || 'Sign In');
+                        el.innerHTML = `${texts[key]} <a href="javascript:void(0)" onclick="toggleAuth()" style="color: var(--primary); text-decoration: none; font-weight: 600;">${linkText}</a>`;
+                    } else if (key === 'btn_search') {
+                        el.innerHTML = texts[key] + ' <i data-lucide="arrow-right"></i>';
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    } else {
+                        el.innerText = texts[key];
+                    }
+                }
+            });
+
+            // Update placeholders
+            const pMap = {
+                'auth-email': 'lbl_email',
+                'auth-password': 'lbl_pass',
+                'auth-phone': 'lbl_phone',
+                'form-title': 'lbl_prop_title',
+                'form-desc': 'lbl_desc',
+                'form-phone': 'lbl_phone'
+            };
+
+            for (const [id, key] of Object.entries(pMap)) {
+                const el = document.getElementById(id);
+                if (el && texts[key]) el.placeholder = texts[key];
+            }
+
+            // Re-render components that use translations but aren't purely static
+            if (currentView === 'browse') fetchListings();
+            if (currentView === 'dashboard') updateDashboard();
+        }
+
+        // ============================================
+        // TOAST NOTIFICATIONS
+        // ============================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let bg = '#1e293b';
+            let border = '#334155';
+            if (type === 'success') { bg = '#064e3b'; border = '#059669'; }
+            if (type === 'error') { bg = '#7f1d1d'; border = '#dc2626'; }
+
+            toast.style.cssText = `
+                background: ${bg};
+                border: 1px solid ${border};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                min-width: 300px;
+                animation: slideIn 0.3s ease-out;
+                z-index: 10000;
+            `;
+
+            toast.innerHTML = `<span style="font-weight: 500;">${message}</span>`; // Simple for now
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000); // Auto remove after 3s
+        }
+
+        // Add keyframes for toast
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
+
+        // ============================================
+        // NAVIGATION - Simple and bulletproof
+        // ============================================
+        function goTo(view) {
+            console.log('Navigating to:', view);
+
+            // Hide all views
+            document.querySelectorAll('.view-container').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Remove active from nav
+            document.querySelectorAll('.nav-links a').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Show target view
+            const idMap = {
+                'home': 'home-view',
+                'create': 'create-view',
+                'dashboard': 'dashboard-view',
+                'browse': 'browse-view'
+            };
+
+            const targetId = idMap[view] || (view + '-view');
+            const targetView = document.getElementById(targetId);
+            if (targetView) {
+                targetView.classList.add('active');
+            }
+
+            // Highlight nav
+            const navMap = {
+                'home': 'nav-home',
+                'create': 'nav-create',
+                'dashboard': 'nav-bookings'
+            };
+            const navLinkId = navMap[view] || ('nav-' + view);
+            const navLink = document.getElementById(navLinkId);
+            if (navLink) {
+                navLink.classList.add('active');
+            }
+
+            // Update current view
+            currentView = view;
+
+            // Run view-specific logic
+            if (view === 'browse' || view === 'home') fetchListings();
+            if (view === 'dashboard') updateDashboard();
+            if (view === 'auth') updateAuthText();
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+
+            // Refresh icons
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // ============================================
+        // AUTHENTICATION
+        // ============================================
+        function toggleAuth() {
+            authMode = authMode === 'login' ? 'signup' : 'login';
+            updateAuthText();
+        }
+
+        function updateAuthText() {
+            const title = document.getElementById('auth-title');
+            const subtitle = document.getElementById('auth-subtitle');
+            const submit = document.getElementById('auth-submit');
+            const toggle = document.getElementById('auth-toggle-text');
+
+            if (title) title.setAttribute('data-i18n', authMode === 'login' ? 'auth_welcome' : 'auth_join');
+            if (subtitle) subtitle.setAttribute('data-i18n', authMode === 'login' ? 'auth_sub_login' : 'auth_sub_signup');
+            if (submit) submit.setAttribute('data-i18n', authMode === 'login' ? 'btn_signin' : 'btn_signup');
+            if (toggle) toggle.setAttribute('data-i18n', authMode === 'login' ? 'auth_no_account' : 'auth_has_account');
+
+            // Apply translations immediately
+            updateLanguage(currentLang);
+
+            // Toggle phone field
+            const phoneContainer = document.getElementById('auth-phone-container');
+            const phoneInput = document.getElementById('auth-phone');
+            if (phoneContainer) {
+                phoneContainer.style.display = authMode === 'signup' ? 'block' : 'none';
+                if (phoneInput) {
+                    if (authMode === 'signup') {
+                        phoneInput.setAttribute('required', 'true');
+                    } else {
+                        phoneInput.removeAttribute('required');
+                    }
+                }
+            }
+        }
+
+        function updateUserNav() {
+            const userNav = document.getElementById('user-nav');
+            if (!userNav) return;
+
+            // Always show bell and avatar, update click handlers
+            userNav.innerHTML = `
+                <div class="notification-bell">
+                    <i data-lucide="bell" style="width: 20px; height: 20px;"></i>
+                    <div class="notification-badge"></div>
+                </div>
+                <div class="avatar-circle" id="user-avatar-btn">
+                    <i data-lucide="user" style="width: 20px; height: 20px;"></i>
+                </div>
+            `;
+
+            document.getElementById('user-avatar-btn').onclick = () => {
+                if (currentUser) {
+                    goTo('dashboard');
+                } else {
+                    authMode = 'login';
+                    goTo('auth');
+                }
+            };
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const phone = document.getElementById('auth-phone').value;
+            const btn = document.getElementById('auth-submit');
+
+            btn.disabled = true;
+            btn.innerText = 'Processing...';
+
+            try {
+                console.log('Attempting auth with:', email, authMode);
+                if (sb) {
+                    let result;
+                    if (authMode === 'login') {
+                        result = await sb.auth.signInWithPassword({ email, password });
+                    } else {
+                        result = await sb.auth.signUp({
+                            email,
+                            password,
+                            options: {
+                                data: { phone: phone }
+                            }
+                        });
+                    }
+                    if (result.error) throw result.error;
+                    console.log('Auth successful:', result.data.user);
+                    currentUser = result.data.user;
+                    updateUserNav();
+                    goTo('home');
+                } else {
+                    throw new Error('Supabase not available. Please check your internet connection or console for errors.');
+                }
+            } catch (err) {
+                console.error('Full Auth Error Object:', err);
+                let msg = err.message || 'Authentication failed';
+                if (msg === 'Failed to fetch') {
+                    msg = 'Connection Error: Unable to reach the authentication server. Please check your internet connection or proxy settings.';
+                }
+                alert(msg);
+                btn.disabled = false;
+                btn.innerText = authMode === 'login' ? 'Sign In' : 'Sign Up';
+            }
+        }
+
+        function handleGoogleSignIn() {
+            if (!sb) {
+                alert('Google Sign-in requires Supabase. Please use Demo Login or email.');
+                return;
+            }
+            sb.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin + window.location.pathname }
+            }).catch(err => alert(err.message));
+        }
+
+        function handleDemoLogin() {
+            console.log('Demo login activated');
+            currentUser = {
+                id: 'demo-' + Date.now(),
+                email: 'demo@betopia.et'
+            };
+            updateUserNav();
+            alert('✅ Demo mode activated! You can now access all features.');
+            goTo('create');
+        }
+
+        function handleLogout() {
+            console.log('Logging out');
+            if (sb) sb.auth.signOut().catch(e => console.warn(e));
+            currentUser = null;
+            updateUserNav();
+            goTo('home');
+        }
+
+        // ============================================
+        // UI HELPERS
+        // ============================================
+        function setPlan(type, price, el) {
+            currentPlan = { type, price };
+            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function setType(type, el) {
+            currentType = type;
+            const parent = el.parentElement;
+            parent.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function setContract(type, el) {
+            currentContract = type;
+            const parent = el.parentElement;
+            parent.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // ============================================
+        // PAYMENT
+        // ============================================
+        function openPayment(amount) {
+            document.getElementById('modal-amount').innerText = `${amount} ETB`;
+            document.getElementById('payment-modal').style.display = 'flex';
+        }
+
+        function closePayment() {
+            document.getElementById('payment-modal').style.display = 'none';
+        }
+
+        async function verifyPayment() {
+            const transId = document.getElementById('transaction-id').value;
+            if (transId.length < 5) {
+                alert('Please enter a valid Transaction ID');
+                return;
+            }
+
+            const btn = document.getElementById('verify-btn');
+            btn.disabled = true;
+            btn.innerText = 'Verifying...';
+
+            try {
+                // Add Gemini AI Analysis Metadata
+                let geminiMeta = "";
+                let aiTags = [];
+
+                if (currentPlan.type === '3d-ai' || currentType === '3d') {
+                    // GEMINI SIMULATION
+                    const btn = document.getElementById('verify-btn');
+                    btn.innerText = '✨ Gemini AI Analyzing...';
+
+                    // Simulate analysis delay
+                    await new Promise(r => setTimeout(r, 2000));
+
+                    aiTags = ["✨ AI Verified", "🛡️ Secure Location", "💎 Premium Finish"];
+                    geminiMeta = "\n\n🤖 Gemini AI Analysis:\n- Lighting: Excellent (9.2/10)\n- Spaciousness: High\n- Condition: Move-in Ready";
+                    showToast('Gemini AI has analyzed your property!', 'success');
+                }
+
+                // Simulate payment verification delay
+                await new Promise(r => setTimeout(r, 1000));
+
+                if (!pendingListingData) {
+                    throw new Error('No listing data found. Please try again.');
+                }
+
+                // Add metadata
+                // Fix: 'phone' column does not exist in DB schema.
+                // Solution: Append phone number to the description field.
+                const phoneAppend = `\n\n📞 Contact: ${pendingListingData.phone}`;
+
+                // Handle Images: Upload real files to Supabase Storage
+                let imageUrls = [];
+                if (pendingListingData.files && pendingListingData.files.length > 0) {
+                    btn.innerText = '📤 Uploading Images...';
+                    for (let i = 0; i < pendingListingData.files.length; i++) {
+                        const file = pendingListingData.files[i];
+                        const fileExt = file.name.split('.').pop();
+                        const fileName = `${currentUser.id}_${Date.now()}_${i}.${fileExt}`;
+                        const filePath = `${fileName}`;
+
+                        const { data: uploadData, error: uploadError } = await sb.storage
+                            .from('property-images')
+                            .upload(filePath, file);
+
+                        if (uploadError) {
+                            console.error('Upload error:', uploadError);
+                            continue; // Skip failed uploads
+                        }
+
+                        const { data: { publicUrl } } = sb.storage
+                            .from('property-images')
+                            .getPublicUrl(filePath);
+
+                        imageUrls.push(publicUrl);
+                    }
+                }
+
+                // Fallback to default if no images uploaded successfully
+                if (imageUrls.length === 0) {
+                    imageUrls = ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=400&q=80'];
+                }
+
+                // Add Gemini tags to title or description
+                let finalDesc = pendingListingData.description + phoneAppend + geminiMeta;
+
+                const listingPayload = {
+                    title: pendingListingData.title + (aiTags.length > 0 ? " (AI Verified)" : ""),
+                    price: pendingListingData.price,
+                    location_city: pendingListingData.location_city,
+                    location_neighborhood: pendingListingData.location_neighborhood,
+                    bedrooms: pendingListingData.bedrooms,
+                    bathrooms: pendingListingData.bathrooms,
+                    sqft: pendingListingData.sqft,
+                    description: finalDesc,
+                    property_type: pendingListingData.property_type || 'apartment',
+                    is_rent: currentContract === 'rent',
+                    status: 'published',
+                    images: imageUrls,
+                    user_id: currentUser ? currentUser.id : null,
+                    created_at: new Date().toISOString()
+                };
+
+                if (sb) {
+                    if (pendingListingData.isPromotion) {
+                        // Handle Promotion Update
+                        const { error } = await sb.from('listings')
+                            .update({ featured: true })
+                            .eq('id', pendingListingData.id);
+                        if (error) throw error;
+                        showToast('✅ Verification Successful! Property Promoted.', 'success');
+                    } else {
+                        // Handle New Listing Insertion
+                        const { error } = await sb.from('listings').insert([listingPayload]);
+                        if (error) throw error;
+                        showToast('✅ Verification Successful! Listing Published.', 'success');
+                    }
+                } else {
+                    console.warn('Supabase not connected, action not saved to DB.');
+                }
+
+                document.getElementById('create-form').reset();
+                closePayment();
+                btn.disabled = false;
+                btn.innerText = 'Verify & Publish';
+                updateDashboard(); // Refresh dashboard
+                goTo('browse');
+
+            } catch (err) {
+                console.error('Listing creation failed:', err);
+                showToast(err.message || 'Failed to create listing', 'error');
+                btn.disabled = false;
+                btn.innerText = 'Verify & Publish';
+            }
+        }
+
+        // ============================================
+        // LISTINGS
+        // ============================================
+        async function fetchListings() {
+            const featuredGrid = document.getElementById('featured-grid');
+            const listingsGrid = document.getElementById('listings-grid');
+
+            if (featuredGrid) featuredGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem;">Loading properties...</div>';
+            if (listingsGrid) listingsGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem;">Loading properties...</div>';
+
+            try {
+                if (sb) {
+                    const { data, error } = await sb.from('listings')
+                        .select('*')
+                        .eq('status', 'published')
+                        .order('created_at', { ascending: false })
+                        .limit(20);
+
+                    if (error) throw error;
+
+                    if (data && data.length > 0) {
+                        renderListings(data, featuredGrid);
+                        renderListings(data, listingsGrid);
+                    } else {
+                        const noMsg = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #94a3b8;">No properties found. Check back soon!</div>';
+                        if (featuredGrid) featuredGrid.innerHTML = noMsg;
+                        if (listingsGrid) listingsGrid.innerHTML = noMsg;
+                    }
+                } else {
+                    throw new Error('Database connection not available');
+                }
+            } catch (e) {
+                console.error('Fetch error:', e);
+                const errorMsg = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #ef4444;">Unable to load listings. Please try again later.</div>';
+                if (featuredGrid) featuredGrid.innerHTML = errorMsg;
+                if (listingsGrid) listingsGrid.innerHTML = errorMsg;
+            }
+        }
+
+        function changeImage(btn, dir) {
+            // Prevent card click
+            if (event) event.stopPropagation();
+
+            const card = btn.closest('.listing-image-container');
+            const img = card.querySelector('.listing-image');
+
+            // Safer JSON parsing
+            let images = [];
+            try {
+                images = JSON.parse(card.getAttribute('data-images') || '[]');
+            } catch (e) {
+                console.error('Error parsing images', e);
+                return;
+            }
+
+            let index = parseInt(card.dataset.index || '0');
+
+            index = index + dir;
+            if (index >= images.length) index = 0;
+            if (index < 0) index = images.length - 1;
+
+            img.src = images[index];
+            card.dataset.index = index;
+        }
+
+        function renderListings(arr, grid) {
+            if (!grid) return;
+            if (!arr || arr.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem;">No homes found.</div>';
+                return;
+            }
+
+            grid.innerHTML = arr.map(item => {
+                const images = item.images && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80'];
+                const safeImages = JSON.stringify(images).replace(/'/g, "&apos;");
+
+                // Get translated label for Rent/Sale and Type
+                const texts = translations[currentLang] || translations['en'];
+                const contractLabel = item.is_rent ? (texts['badge_rent'] || 'FOR RENT') : (texts['badge_sale'] || 'FOR SALE');
+                const typeKey = `type_${item.property_type.toLowerCase()}`;
+                const typeLabel = texts[typeKey] || item.property_type;
+
+                const cleanDesc = item.description.split('📞 Contact:')[0].trim();
+
+                return `
+                <div class="listing-card">
+                    <div class="listing-image-container" data-images='${safeImages}' data-index="0">
+                        <div class="listing-badge">${contractLabel}</div>
+                        <img class="listing-image" src="${images[0]}" />
+                        ${images.length > 1 ? `
+                            <button class="carousel-btn prev" onclick="changeImage(this, -1)">
+                                <i data-lucide="chevron-left" style="width: 16px; height: 16px;"></i>
+                            </button>
+                            <button class="carousel-btn next" onclick="changeImage(this, 1)">
+                                <i data-lucide="chevron-right" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                    <div class="listing-content">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                            <span class="listing-price">ETB ${(item.price || 0).toLocaleString()}</span>
+                            <span class="listing-type-badge">${typeLabel}</span>
+                        </div>
+                        <h3 class="listing-title">${item.title}</h3>
+                        <p class="listing-location">
+                            <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                            ${item.location_neighborhood || ''}, ${item.location_city || 'Addis Ababa'}
+                        </p>
+                        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0.75rem 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            ${cleanDesc}
+                        </p>
+                        <p class="listing-phone" style="display: flex; align-items: center; gap: 0.5rem; color: #4ade80; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem;">
+                            <i data-lucide="phone" style="width: 14px; height: 14px;"></i>
+                            ${item.description && item.description.match(/📞 Contact: ([^\n]+)/) ? item.description.match(/📞 Contact: ([^\n]+)/)[1] : 'Contact Owner'}
+                        </p>
+                        <div class="listing-stats">
+                            <span><i data-lucide="bed" style="width: 12px; height: 12px;"></i> ${item.bedrooms || 0} Beds</span>
+                            <span><i data-lucide="bath" style="width: 12px; height: 12px;"></i> ${item.bathrooms || 0} Baths</span>
+                            <span><i data-lucide="maximize" style="width: 12px; height: 12px;"></i> ${item.sqft || 0} SQM</span>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        async function updateDashboard() {
+            if (!currentUser) {
+                const myGrid = document.getElementById('my-listings-grid');
+                if (myGrid) myGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; opacity: 0.5;">Please log in to see your properties.</div>';
+                return;
+            }
+
+            try {
+                if (sb) {
+                    const { data, error } = await sb.from('listings')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .order('created_at', { ascending: false });
+
+                    if (error) throw error;
+
+                    // Update Stats
+                    const total = data.length;
+                    const views = data.reduce((sum, item) => sum + (item.views_count || 0), 0);
+                    const volume = data.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+
+                    const totalEl = document.getElementById('stat-total');
+                    const viewsEl = document.getElementById('stat-views');
+                    const volumeEl = document.getElementById('stat-volume');
+
+                    if (totalEl) totalEl.innerText = total;
+                    if (viewsEl) viewsEl.innerText = views;
+                    if (volumeEl) volumeEl.innerText = `ETB ${volume.toLocaleString()}`;
+
+                    const myGrid = document.getElementById('my-listings-grid');
+                    if (data.length > 0) {
+                        renderMyListings(data);
+                    } else {
+                        myGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; opacity: 0.5;">You haven\'t listed any properties yet.</div>';
+                    }
+                }
+            } catch (e) {
+                console.error('Dashboard update error:', e);
+            }
+        }
+
+        function renderMyListings(arr) {
+            const grid = document.getElementById('my-listings-grid');
+            if (!grid) return;
+
+            grid.innerHTML = arr.map(item => {
+                const images = item.images && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80'];
+                const safeImages = JSON.stringify(images).replace(/'/g, "&apos;");
+
+                return `
+                <div class="listing-card">
+                    <div class="listing-image-container" data-images='${safeImages}' data-index="0">
+                        <img class="listing-image" src="${images[0]}" />
+                    </div>
+                    <div class="listing-content">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                            <span class="listing-price">ETB ${(item.price || 0).toLocaleString()}</span>
+                            <span class="listing-status" style="font-size: 0.7rem; color: ${item.status === 'published' ? '#4ade80' : '#fca311'}; font-weight: 700;">${item.status.toUpperCase()}</span>
+                        </div>
+                        <h3 class="listing-title">${item.title}</h3>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn btn-outline" onclick="deleteListing('${item.id}')" style="flex: 1; padding: 0.4rem; font-size: 0.8rem; border-color: #ef4444; color: #ef4444; background: transparent;">Delete</button>
+                            ${!item.featured ? `<button class="btn btn-primary" onclick="promoteListing('${item.id}')" style="flex: 1; padding: 0.4rem; font-size: 0.8rem;">Promote</button>` : '<span style="flex: 1; text-align: center; color: #fca311; font-weight: 700; font-size: 0.8rem;">FEATURED</span>'}
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        async function deleteListing(id) {
+            if (!confirm('Are you sure you want to delete this listing?')) return;
+            try {
+                const { error } = await sb.from('listings').delete().eq('id', id);
+                if (error) throw error;
+                showToast('Listing deleted successfully', 'success');
+                updateDashboard();
+                fetchListings(); // Update browse view too
+            } catch (e) {
+                console.error('Delete error:', e);
+                showToast('Failed to delete listing', 'error');
+            }
+        }
+
+        function promoteListing(id) {
+            currentPlan = { type: 'featured', price: 500 };
+            pendingListingData = { id: id, isPromotion: true };
+            openPayment(500);
+        }
+
+        // ============================================
+        // FORM SUBMISSION
+        // ============================================
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            if (!currentUser) {
+                alert('Please log in or sign up first to list a property.');
+                goTo('auth');
+                return;
+            }
+
+            pendingListingData = {
+                title: document.getElementById('form-title').value,
+                phone: document.getElementById('form-phone').value,
+                price: parseFloat(document.getElementById('form-price').value) || 0,
+                location_city: document.getElementById('form-city').value,
+                location_neighborhood: document.getElementById('form-neighborhood').value,
+                bedrooms: parseInt(document.getElementById('form-beds').value),
+                bathrooms: parseInt(document.getElementById('form-baths').value),
+                sqft: parseFloat(document.getElementById('form-sqm').value),
+                description: document.getElementById('form-desc').value,
+                property_type: document.getElementById('form-type').value,
+                is_rent: currentContract === 'rent'
+            };
+
+            // Validate Images
+            const fileInput = document.getElementById('form-images');
+            const files = fileInput.files;
+            const maxImages = currentPlan.type === '3d-ai' ? 20 : 5;
+
+            // Limit removed by user request
+            // if (files.length > maxImages) { ... }
+
+            // Store files for upload later
+            pendingListingData.files = files;
+
+            openPayment(currentPlan.price);
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('DOM loaded - initializing app');
+
+            // Initialize icons
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Set up button listeners
+            document.getElementById('login-btn').onclick = () => { authMode = 'login'; goTo('auth'); };
+            document.getElementById('signup-btn').onclick = () => { authMode = 'signup'; goTo('auth'); };
+            document.getElementById('google-signin-btn').onclick = handleGoogleSignIn;
+            document.getElementById('demo-login-btn').onclick = handleDemoLogin;
+
+            // Set up form
+            document.getElementById('auth-form').onsubmit = handleAuth;
+            document.getElementById('create-form').onsubmit = handleFormSubmit;
+
+            // Check Supabase auth
+            if (sb) {
+                sb.auth.getSession().then(({ data: { session } }) => {
+                    if (session?.user) {
+                        currentUser = session.user;
+                        updateUserNav();
+                    }
+                }).catch(e => console.warn('Session check failed:', e));
+
+                sb.auth.onAuthStateChange((event, session) => {
+                    currentUser = session?.user || null;
+                    updateUserNav();
+                });
+            }
+
+            // Load saved language
+            const savedLang = localStorage.getItem('betopia_lang');
+            if (savedLang) {
+                document.getElementById('lang-selector').value = savedLang;
+                updateLanguage(savedLang);
+            }
+
+            // Hide loader
+            // Hide loader immediately
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 300); // Only wait for fade transition
+            }
+        });
+    </script>
+</body>
+
+</html>

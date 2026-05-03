@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Betoch - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/auth.js"></script>
+    <style>
+        body {
+            background-image: url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            /* Modern Home */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: -1;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .neon-input:focus {
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+            border-color: rgba(139, 92, 246, 0.8);
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center p-4 relative">
+    <div class="bg-overlay"></div>
+    <div class="glass-panel w-full max-w-md p-8 rounded-2xl animate-fade-in-up">
+        <div class="text-center mb-8">
+            <h1
+                class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-2">
+                Welcome Back</h1>
+            <p class="text-indigo-200">Access your property dashboard</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-indigo-300 mb-1">Email Address</label>
+                <input type="email" id="email" required
+                    class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 neon-input transition-all duration-300"
+                    placeholder="john@example.com">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-indigo-300 mb-1">Password</label>
+                <input type="password" id="password" required
+                    class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 neon-input transition-all duration-300"
+                    placeholder="••••••••">
+            </div>
+
+            <button type="submit"
+                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 rounded-lg shadow-lg transform hover:scale-[1.02] transition-all duration-300">
+                Log In
+            </button>
+        </form>
+
+        <p class="text-center mt-6 text-indigo-300 text-sm">
+            Don't have an account?
+            <a href="signup.html" class="text-cyan-400 hover:text-cyan-300 underline transition-colors">Sign Up</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const result = Auth.login(email, password);
+
+            if (result.success) {
+                window.location.href = 'home.html';
+            } else {
+                alert(result.message);
+            }
+        });
+    </script>
+</body>
+
+</html>

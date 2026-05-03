@@ -1,0 +1,5 @@
+{
+    "title": "Payment Checkout",
+    "gateway_url": "https://196.188.120.3:38443/apiaccess/payment/gateway",
+    "merchant_code": "272039"
+}
