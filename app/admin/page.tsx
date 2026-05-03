@@ -32,10 +32,10 @@ interface UserListing {
     price: number
     location_city: string
     created_at: string
-    profiles?: {
-        full_name: string | null
-        email: string
-    }
+    images?: any
+    property_type?: string
+    user_id?: string
+    profiles?: any
 }
 
 type AdminView = 'users' | 'user_listings' | 'all_listings'
