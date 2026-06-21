@@ -55,15 +55,15 @@ export function SiteHeader() {
         <header className="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-md border-b border-white/10 h-20 text-white">
             <div className="max-w-[2520px] mx-auto xl:px-20 md:px-10 sm:px-2 px-4 h-full">
                 <div className="flex flex-row items-center justify-between h-full relative">
-                    {/* Logo (Hidden or small for now to match screenshot focus on center nav) */}
-                    <Link href="/" className="md:flex items-center gap-1 cursor-pointer absolute left-0 hidden">
-                        <div className="text-[#ff385c] font-bold text-2xl">
+                    {/* Logo */}
+                    <Link href="/" className="flex items-center gap-1 cursor-pointer shrink-0 z-10">
+                        <div className="text-[#ff385c] font-black text-2xl tracking-tighter">
                             Betopia
                         </div>
                     </Link>
 
                     {/* Navigation - Centered */}
-                    <nav className="flex items-center gap-8 mx-auto h-full">
+                    <nav className="hidden lg:flex items-center gap-8 mx-auto h-full">
                         {navLinks.map((link) => {
                             const isActive = pathname === link.href
                             return (
@@ -83,7 +83,7 @@ export function SiteHeader() {
                     </nav>
 
                     {/* Actions - Right */}
-                    <div className="flex items-center gap-6 absolute right-0">
+                    <div className="flex items-center gap-4 md:gap-6 shrink-0 z-10">
                         {/* Profile Dropdown */}
                         <div ref={dropdownRef} className="relative flex items-center gap-2 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
                             <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center overflow-hidden border border-white/10">
