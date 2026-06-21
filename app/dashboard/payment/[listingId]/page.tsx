@@ -120,8 +120,8 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                 listing_id: params.listingId,
                 plan_id: plan.id,
                 amount: plan.price,
-                provider: 'payrify',
-                status: 'completed',
+                provider: 'manual',
+                status: 'pending',
                 transaction_id: transactionId.trim()
             })
 
@@ -228,100 +228,96 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
             </div>
 
             <div className="max-w-md mx-auto">
-                <Card className="border-t-4 border-t-[#ff385c] shadow-lg">
-                    <CardHeader className="bg-gray-50/50 pb-6 border-b border-gray-100">
-                        <CardTitle className="text-xl">Checkout</CardTitle>
-                        <CardDescription>Complete your payment securely with Payrify</CardDescription>
+                <Card className="border-t-4 border-t-[#ff385c] shadow-lg bg-neutral-950 border-white/10 text-white">
+                    <CardHeader className="bg-white/5 pb-6 border-b border-white/10">
+                        <CardTitle className="text-xl font-black uppercase tracking-wider text-white">Checkout</CardTitle>
+                        <CardDescription className="text-neutral-400">Complete your payment manually via Telebirr or CBE Bank Transfer</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-6">
-                        <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <div className="flex justify-between items-center">
-                                <span className="font-medium text-gray-600">Selected Plan</span>
-                                <span className="font-bold">{activePlan?.name}</span>
+                        <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="font-medium text-neutral-400">Selected Plan</span>
+                                <span className="font-bold text-white">{activePlan?.name}</span>
                             </div>
-                            <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                                <span className="font-medium text-gray-600">Total Amount</span>
+                            <div className="flex justify-between items-center pt-2 border-t border-white/10 text-sm">
+                                <span className="font-medium text-neutral-400">Total Amount</span>
                                 <span className="font-bold text-xl text-[#ff385c]">ETB {activePlan?.price}</span>
                             </div>
                         </div>
 
-                        {paymentStep === 1 ? (
-                            <div className="space-y-4 animate-in fade-in duration-300">
-                                <div className="space-y-4 animate-in fade-in duration-300">
-                                    <div className="bg-rose-50 p-4 rounded-xl flex items-start gap-3 border border-rose-100">
-                                        <ShieldCheck className="text-[#ff385c] h-6 w-6 shrink-0 mt-0.5" />
-                                        <div className="text-sm">
-                                            <p className="font-bold text-rose-950 mb-1">Payrify Secure Checkout</p>
-                                            <p className="text-rose-800 leading-relaxed">
-                                                Click below to securely pay via Payrify. Once completed, you'll enter your Transaction ID here to verify.
-                                            </p>
-                                        </div>
-                                    </div>
+                        <div className="space-y-4">
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-sm leading-relaxed">
+                                <p className="font-bold text-white mb-2 uppercase tracking-wider text-xs text-[#ff385c]">Payment Instructions</p>
+                                <p className="text-neutral-300">
+                                    Please transfer <strong className="text-white">ETB {activePlan?.price}</strong> to either the Telebirr account or CBE Bank account below. After transferring, copy the <strong className="text-white">Transaction Reference ID</strong> (e.g. FT26...) from your confirmation SMS/app and paste it in the box below.
+                                </p>
+                            </div>
 
-                                    <Button
-                                        className="w-full h-14 text-lg font-bold bg-[#ff385c] hover:bg-[#d90b35] transition-all shadow-lg hover:shadow-xl mt-2"
-                                        onClick={handleOpenPayrify}
-                                    >
-                                        Proceed to Payrify
-                                        <ExternalLink className="ml-2 h-5 w-5" />
-                                    </Button>
+                            {/* Accounts Info */}
+                            <div className="grid grid-cols-1 gap-3">
+                                <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+                                    <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Option 1: Telebirr (Phone Transfer)</p>
+                                    <p className="font-bold text-lg text-white mt-1">+251 930 614 550</p>
+                                    <p className="text-xs text-neutral-400">Account Name: Nathan Yohannes</p>
+                                </div>
+                                <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+                                    <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Option 2: CBE Bank Account</p>
+                                    <p className="font-bold text-lg text-white mt-1">1000614550</p>
+                                    <p className="text-xs text-neutral-400">Account Name: Nathan Yohannes (Commercial Bank of Ethiopia)</p>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                                <div className="bg-blue-50 p-4 rounded-xl flex flex-col gap-2 border border-blue-100">
-                                    <p className="font-bold text-blue-950 text-sm">Waiting for verification</p>
-                                    <p className="text-blue-800 text-sm leading-relaxed">
-                                        Enter the Transaction ID provided by Payrify after your successful payment.
-                                    </p>
-                                </div>
 
-                                <div className="space-y-2">
-                                    <label htmlFor="transactionId" className="text-sm font-semibold text-gray-700">
-                                        Transaction ID
-                                    </label>
-                                    <Input
-                                        id="transactionId"
-                                        placeholder="e.g. TXN-123456789"
-                                        value={transactionId}
-                                        onChange={(e) => {
-                                            setTransactionId(e.target.value)
-                                            setError("")
-                                        }}
-                                        className="h-12 border-gray-300 focus-visible:ring-[#ff385c]"
+                            {/* QR Code */}
+                            <div className="flex flex-col items-center justify-center p-6 rounded-2xl border border-white/10 bg-white/[0.01] gap-3">
+                                <span className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Scan QR Code to Pay</span>
+                                <div className="bg-white p-3 rounded-2xl w-48 h-48 overflow-hidden shadow-2xl">
+                                    <img 
+                                        src="/payment_qr.jpg" 
+                                        alt="Telebirr Payment QR Code" 
+                                        className="w-full h-full object-contain"
                                     />
-                                    {error && <p className="text-red-500 text-sm font-medium animate-in fade-in">{error}</p>}
                                 </div>
-
-                                <div className="pt-2 flex flex-col gap-3">
-                                    <Button
-                                        className="w-full h-12 text-lg font-bold bg-[#ff385c] hover:bg-[#d90b35]"
-                                        onClick={handleConfirmPayment}
-                                        disabled={processing}
-                                    >
-                                        {processing ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                                Verifying...
-                                            </>
-                                        ) : (
-                                            "Confirm Payment"
-                                        )}
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full text-sm text-gray-500 hover:text-gray-800"
-                                        onClick={() => setPaymentStep(1)}
-                                        disabled={processing}
-                                    >
-                                        &larr; Back to select payment method
-                                    </Button>
-                                </div>
+                                <span className="text-xs text-neutral-500">Nathan (+251930******550)</span>
                             </div>
-                        )}
+
+                            {/* Transaction ID Input */}
+                            <div className="space-y-2">
+                                <label htmlFor="transactionId" className="text-xs font-black uppercase tracking-widest text-neutral-400">
+                                    Transaction ID / Reference Number
+                                </label>
+                                <Input
+                                    id="transactionId"
+                                    placeholder="e.g. FT26..."
+                                    value={transactionId}
+                                    onChange={(e) => {
+                                        setTransactionId(e.target.value)
+                                        setError("")
+                                    }}
+                                    className="h-12 border-white/10 bg-white/5 focus-visible:ring-[#ff385c] text-white"
+                                />
+                                {error && <p className="text-red-500 text-sm font-medium animate-in fade-in">{error}</p>}
+                            </div>
+
+                            <div className="pt-2">
+                                <Button
+                                    className="w-full h-14 text-lg font-black uppercase tracking-widest bg-[#ff385c] hover:bg-[#d90b35] text-white rounded-2xl shadow-xl shadow-[#ff385c]/10"
+                                    onClick={handleConfirmPayment}
+                                    disabled={processing}
+                                >
+                                    {processing ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        "Submit Transaction ID"
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
                     </CardContent>
-                    <div className="text-center pb-6 text-xs text-muted-foreground flex items-center justify-center gap-1.5 opacity-70">
-                        <ShieldCheck size={14} className="text-gray-400" /> Powered by Payrify Secure
+                    <div className="text-center pb-6 text-[10px] font-black uppercase tracking-widest text-neutral-500 flex items-center justify-center gap-1.5 opacity-60">
+                        <ShieldCheck size={14} className="text-neutral-500" /> Manual Payment Approval System
                     </div>
                 </Card>
             </div>

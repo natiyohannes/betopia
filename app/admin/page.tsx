@@ -36,6 +36,7 @@ interface UserListing {
     property_type?: string
     user_id?: string
     profiles?: any
+    payments?: any
 }
 
 type AdminView = 'users' | 'user_listings' | 'all_listings'
@@ -367,7 +368,17 @@ export default function AdminPage() {
             setUserListings([])
         } else {
             console.log('Fetched data:', data)
-            setUserListings(data || [])
+            // Fetch payments for this user to associate transaction IDs
+            const { data: paymentsData } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('user_id', user.id)
+                
+            const listingsWithPayments = (data || []).map((listing: any) => {
+                const listingPayments = paymentsData ? paymentsData.filter((p: any) => p.listing_id === listing.id) : []
+                return { ...listing, payments: listingPayments }
+            })
+            setUserListings(listingsWithPayments)
         }
         setLoadingListings(false)
     }
@@ -586,61 +597,82 @@ export default function AdminPage() {
                             </div>
                         ) : (
                             <div className="grid gap-4">
-                                {userListings.map(listing => (
-                                    <div key={listing.id} className="bg-neutral-950 border border-white/10 rounded-3xl p-6 flex items-center justify-between hover:border-white/20 transition-all">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-2 h-2 rounded-full ${
-                                                listing.status === 'published' ? 'bg-green-500' :
-                                                listing.status === 'pending_payment' ? 'bg-amber-500' : 'bg-neutral-600'
-                                            }`} />
-                                            <div>
-                                                <p className="font-bold text-white">{listing.title}</p>
-                                                <p className="text-xs text-neutral-500 mt-0.5">{listing.location_city} · ETB {Number(listing.price).toLocaleString()}</p>
+                                {userListings.map(listing => {
+                                    const payment = listing.payments ? (Array.isArray(listing.payments) ? listing.payments[0] : listing.payments) : null;
+                                    return (
+                                        <div key={listing.id} className="bg-neutral-950 border border-white/10 rounded-3xl p-6 flex items-center justify-between hover:border-white/20 transition-all">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-2 h-2 rounded-full ${
+                                                    listing.status === 'published' ? 'bg-green-500' :
+                                                    listing.status === 'paid' ? 'bg-blue-500' :
+                                                    listing.status === 'pending_payment' ? 'bg-amber-500' : 'bg-neutral-600'
+                                                }`} />
+                                                <div>
+                                                    <p className="font-bold text-white">{listing.title}</p>
+                                                    <p className="text-xs text-neutral-500 mt-0.5">{listing.location_city} · ETB {Number(listing.price).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-6">
+                                                {listing.status === 'paid' && payment && (
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none">TXN Ref ID</p>
+                                                        <p className="text-sm font-mono font-bold text-white mt-1">{payment.transaction_id}</p>
+                                                        <p className="text-[10px] text-neutral-500 font-medium mt-0.5">via {payment.provider} · ETB {payment.amount}</p>
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center gap-4">
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
+                                                        listing.status === 'published' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                        listing.status === 'paid' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                        listing.status === 'pending_payment' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                        'bg-white/5 text-neutral-400 border-white/10'
+                                                    }`}>
+                                                        {listing.status.replace('_', ' ')}
+                                                    </span>
+                                                    {listing.status !== 'published' && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                const { error } = await supabase.from('listings').update({ status: 'published' }).eq('id', listing.id)
+                                                                if (!error) {
+                                                                    await supabase.from('payments').update({ status: 'completed' }).eq('listing_id', listing.id)
+                                                                    setUserListings(prev => prev.map(l => l.id === listing.id ? {...l, status: 'published'} : l))
+                                                                    showToast('success', 'Listing approved and published!')
+                                                                }
+                                                                else showToast('error', 'Failed to publish: ' + error.message)
+                                                            }}
+                                                            className="px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/20 font-bold text-xs rounded-xl transition-colors"
+                                                        >
+                                                            Approve
+                                                        </button>
+                                                    )}
+                                                    {listing.status !== 'rejected' && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                const { error } = await supabase.from('listings').update({ status: 'rejected' }).eq('id', listing.id)
+                                                                if (!error) {
+                                                                    await supabase.from('payments').update({ status: 'failed' }).eq('listing_id', listing.id)
+                                                                    setUserListings(prev => prev.map(l => l.id === listing.id ? {...l, status: 'rejected'} : l))
+                                                                    showToast('success', 'Listing rejected and marked failed!')
+                                                                }
+                                                                else showToast('error', 'Failed to reject: ' + error.message)
+                                                            }}
+                                                            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-bold text-xs rounded-xl transition-colors"
+                                                        >
+                                                            Reject
+                                                        </button>
+                                                    )}
+                                                    <Link
+                                                        href={`/listings/${listing.id}`}
+                                                        className="text-neutral-400 hover:text-white border border-white/10 hover:bg-white/5 p-2 rounded-xl transition-all"
+                                                        title="View listing"
+                                                    >
+                                                        <Eye size={16} />
+                                                    </Link>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${
-                                                listing.status === 'published' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                                listing.status === 'paid' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                listing.status === 'pending_payment' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                'bg-white/5 text-neutral-400 border-white/10'
-                                            }`}>
-                                                {listing.status.replace('_', ' ')}
-                                            </span>
-                                            {listing.status !== 'published' && (
-                                                <button
-                                                    onClick={async () => {
-                                                        const { error } = await supabase.from('listings').update({ status: 'published' }).eq('id', listing.id)
-                                                        if (!error) setUserListings(prev => prev.map(l => l.id === listing.id ? {...l, status: 'published'} : l))
-                                                        else showToast('error', 'Failed to publish: ' + error.message)
-                                                    }}
-                                                    className="px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/20 font-bold text-xs rounded-xl transition-colors"
-                                                >
-                                                    Publish
-                                                </button>
-                                            )}
-                                            {listing.status !== 'rejected' && (
-                                                <button
-                                                    onClick={async () => {
-                                                        const { error } = await supabase.from('listings').update({ status: 'rejected' }).eq('id', listing.id)
-                                                        if (!error) setUserListings(prev => prev.map(l => l.id === listing.id ? {...l, status: 'rejected'} : l))
-                                                        else showToast('error', 'Failed to reject: ' + error.message)
-                                                    }}
-                                                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-bold text-xs rounded-xl transition-colors"
-                                                >
-                                                    Reject
-                                                </button>
-                                            )}
-                                            <Link
-                                                href={`/listings/${listing.id}`}
-                                                className="text-neutral-400 hover:text-white border border-white/10 hover:bg-white/5 p-2 rounded-xl transition-all"
-                                                title="View listing"
-                                            >
-                                                <Eye size={16} />
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         )}
                     </div>
@@ -686,95 +718,122 @@ export default function AdminPage() {
                             </div>
                         ) : (
                             <div className="grid gap-4">
-                                {allListings.map((listing: any) => (
-                                    <div key={listing.id} className="group bg-neutral-950 border border-white/10 rounded-3xl p-5 flex flex-col md:flex-row items-center gap-6 hover:border-white/20 transition-all">
-                                        {/* Simple Image or Placeholder */}
-                                        <div className="w-24 h-24 rounded-2xl bg-neutral-900 border border-white/5 overflow-hidden shrink-0">
-                                            {listing.images?.[0] ? (
-                                                <img src={listing.images[0]} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-[10px] text-neutral-700 font-bold uppercase">No Pic</div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <div className={`w-2 h-2 rounded-full ${
-                                                    listing.status === 'published' ? 'bg-green-500' :
-                                                    listing.status === 'paid' ? 'bg-blue-500' :
-                                                    listing.status === 'pending_payment' ? 'bg-amber-500' : 'bg-neutral-600'
-                                                }`} />
-                                                <h3 className="font-bold text-white truncate text-lg leading-none">{listing.title}</h3>
+                                {allListings.map((listing: any) => {
+                                    const payment = listing.payments ? (Array.isArray(listing.payments) ? listing.payments[0] : listing.payments) : null;
+                                    return (
+                                        <div key={listing.id} className="group bg-neutral-950 border border-white/10 rounded-3xl p-5 flex flex-col md:flex-row items-center gap-6 hover:border-white/20 transition-all">
+                                            {/* Simple Image or Placeholder */}
+                                            <div className="w-24 h-24 rounded-2xl bg-neutral-900 border border-white/5 overflow-hidden shrink-0">
+                                                {listing.images?.[0] ? (
+                                                    <img src={listing.images[0]} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-[10px] text-neutral-700 font-bold uppercase">No Pic</div>
+                                                )}
                                             </div>
-                                            
-                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
-                                                <span className="text-[10px] text-neutral-500 font-black uppercase tracking-widest flex items-center gap-1">
-                                                    📍 {listing.location_city || 'No City'}
-                                                </span>
-                                                <span className="text-[10px] text-neutral-500 font-black uppercase tracking-widest flex items-center gap-1">
-                                                    💰 ETB {Number(listing.price).toLocaleString()}
-                                                </span>
-                                                <span className="text-[10px] text-[#ff385c] font-black uppercase tracking-widest flex items-center gap-1 bg-[#ff385c]/5 px-2 py-0.5 rounded border border-[#ff385c]/10">
-                                                    👤 {listing.profiles?.full_name || listing.profiles?.email || 'Unknown Owner'}
-                                                </span>
-                                            </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-2 shrink-0">
-                                             <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
-                                                listing.status === 'published' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                                listing.status === 'paid' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                listing.status === 'pending_payment' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                listing.status === 'draft' ? 'bg-white/5 text-neutral-500 border-white/5' :
-                                                'bg-white/5 text-neutral-400 border-white/10'
-                                            }`}>
-                                                {listing.status.replace('_', ' ')}
-                                            </span>
-                                            
-                                            <div className="flex items-center gap-1 border border-white/5 rounded-xl p-1 bg-white/5">
-                                                <Link
-                                                    href={`/listings/${listing.id}`}
-                                                    className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-white/10 transition-all"
-                                                    title="View Detail"
-                                                >
-                                                    <Eye size={16} />
-                                                </Link>
-                                                {listing.status !== 'published' && (
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <div className={`w-2 h-2 rounded-full ${
+                                                        listing.status === 'published' ? 'bg-green-500' :
+                                                        listing.status === 'paid' ? 'bg-blue-500' :
+                                                        listing.status === 'pending_payment' ? 'bg-amber-500' : 'bg-neutral-600'
+                                                    }`} />
+                                                    <h3 className="font-bold text-white truncate text-lg leading-none">{listing.title}</h3>
+                                                </div>
+                                                
+                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
+                                                    <span className="text-[10px] text-neutral-500 font-black uppercase tracking-widest flex items-center gap-1">
+                                                        📍 {listing.location_city || 'No City'}
+                                                    </span>
+                                                    <span className="text-[10px] text-neutral-500 font-black uppercase tracking-widest flex items-center gap-1">
+                                                        💰 ETB {Number(listing.price).toLocaleString()}
+                                                    </span>
+                                                    <span className="text-[10px] text-[#ff385c] font-black uppercase tracking-widest flex items-center gap-1 bg-[#ff385c]/5 px-2 py-0.5 rounded border border-[#ff385c]/10">
+                                                        👤 {listing.profiles?.full_name || listing.profiles?.email || 'Unknown Owner'}
+                                                    </span>
+                                                    {listing.status === 'paid' && payment && (
+                                                        <span className="text-[10px] text-amber-400 font-black uppercase tracking-widest flex items-center gap-1 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/10" title={`Reference: ${payment.transaction_id}`}>
+                                                            🔑 TXN: {payment.transaction_id} (ETB {payment.amount})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                 <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
+                                                    listing.status === 'published' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                    listing.status === 'paid' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                    listing.status === 'pending_payment' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                    listing.status === 'draft' ? 'bg-white/5 text-neutral-500 border-white/5' :
+                                                    'bg-white/5 text-neutral-400 border-white/10'
+                                                }`}>
+                                                    {listing.status.replace('_', ' ')}
+                                                </span>
+                                                
+                                                <div className="flex items-center gap-1 border border-white/5 rounded-xl p-1 bg-white/5">
+                                                    <Link
+                                                        href={`/listings/${listing.id}`}
+                                                        className="p-2 rounded-lg text-neutral-500 hover:text-white hover:bg-white/10 transition-all"
+                                                        title="View Detail"
+                                                    >
+                                                        <Eye size={16} />
+                                                    </Link>
+                                                    {listing.status !== 'published' && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                const { error } = await supabase.from('listings').update({ status: 'published' }).eq('id', listing.id)
+                                                                if (!error) {
+                                                                    await supabase.from('payments').update({ status: 'completed' }).eq('listing_id', listing.id)
+                                                                    showToast('success', "Listing Published & Payment Completed")
+                                                                    fetchAllListings()
+                                                                } else {
+                                                                    showToast('error', error.message)
+                                                                }
+                                                            }}
+                                                            className="p-2 rounded-lg text-green-500 hover:text-green-400 hover:bg-green-500/10 transition-all"
+                                                            title="Approve & Publish"
+                                                        >
+                                                            <CheckCircle2 size={16} />
+                                                        </button>
+                                                    )}
+                                                    {listing.status !== 'rejected' && listing.status !== 'published' && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                const { error } = await supabase.from('listings').update({ status: 'rejected' }).eq('id', listing.id)
+                                                                if (!error) {
+                                                                    await supabase.from('payments').update({ status: 'failed' }).eq('listing_id', listing.id)
+                                                                    showToast('success', "Listing Rejected & Payment Failed")
+                                                                    fetchAllListings()
+                                                                } else {
+                                                                    showToast('error', error.message)
+                                                                }
+                                                            }}
+                                                            className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                                            title="Reject Listing"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={async () => {
-                                                            const { error } = await supabase.from('listings').update({ status: 'published' }).eq('id', listing.id)
-                                                            if (!error) {
-                                                                showToast('success', "Listing Published")
-                                                                fetchAllListings()
-                                                            } else {
-                                                                showToast('error', error.message)
+                                                            if (confirm("Permanently delete this listing?")) {
+                                                                const { error } = await supabase.from('listings').delete().eq('id', listing.id)
+                                                                if (!error) {
+                                                                    showToast('success', "Listing Deleted")
+                                                                    fetchAllListings()
+                                                                }
                                                             }
                                                         }}
-                                                        className="p-2 rounded-lg text-green-500 hover:text-green-400 hover:bg-green-500/10 transition-all"
-                                                        title="Approve & Publish"
+                                                        className="p-2 rounded-lg text-neutral-700 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                                        title="Delete"
                                                     >
-                                                        <CheckCircle2 size={16} />
+                                                        <X size={16} />
                                                     </button>
-                                                )}
-                                                <button
-                                                    onClick={async () => {
-                                                        if (confirm("Permanently delete this listing?")) {
-                                                            const { error } = await supabase.from('listings').delete().eq('id', listing.id)
-                                                            if (!error) {
-                                                                showToast('success', "Listing Deleted")
-                                                                fetchAllListings()
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="p-2 rounded-lg text-neutral-700 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                                                    title="Delete"
-                                                >
-                                                    <X size={16} />
-                                                </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         )}
                     </div>

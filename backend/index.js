@@ -162,6 +162,14 @@ app.get('/api/v1/admin/listings', async (req, res) => {
                     full_name,
                     email,
                     phone_number
+                ),
+                payments:payments (
+                    id,
+                    amount,
+                    provider,
+                    status,
+                    transaction_id,
+                    created_at
                 )
             `)
             .order('created_at', { ascending: false });
