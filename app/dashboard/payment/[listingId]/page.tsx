@@ -231,7 +231,7 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                 <Card className="border-t-4 border-t-[#ff385c] shadow-lg bg-neutral-950 border-white/10 text-white">
                     <CardHeader className="bg-white/5 pb-6 border-b border-white/10">
                         <CardTitle className="text-xl font-black uppercase tracking-wider text-white">Checkout</CardTitle>
-                        <CardDescription className="text-neutral-400">Complete your payment manually via Telebirr or CBE Bank Transfer</CardDescription>
+                        <CardDescription className="text-neutral-400">Complete your payment manually via Telebirr</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-6">
                         <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
@@ -249,22 +249,15 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                             <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-sm leading-relaxed">
                                 <p className="font-bold text-white mb-2 uppercase tracking-wider text-xs text-[#ff385c]">Payment Instructions</p>
                                 <p className="text-neutral-300">
-                                    Please transfer <strong className="text-white">ETB {activePlan?.price}</strong> to either the Telebirr account or CBE Bank account below. After transferring, copy the <strong className="text-white">Transaction Reference ID</strong> (e.g. FT26...) from your confirmation SMS/app and paste it in the box below.
+                                    Please transfer <strong className="text-white">ETB {activePlan?.price}</strong> to the Telebirr account below. After transferring, copy the <strong className="text-white">Transaction Reference ID</strong> (e.g. FT26...) from your confirmation SMS/app and paste it in the box below.
                                 </p>
                             </div>
 
-                            {/* Accounts Info */}
-                            <div className="grid grid-cols-1 gap-3">
-                                <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-                                    <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Option 1: Telebirr (Phone Transfer)</p>
-                                    <p className="font-bold text-lg text-white mt-1">+251 930 614 550</p>
-                                    <p className="text-xs text-neutral-400">Account Name: Nathan Yohannes</p>
-                                </div>
-                                <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-                                    <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Option 2: CBE Bank Account</p>
-                                    <p className="font-bold text-lg text-white mt-1">1000614550</p>
-                                    <p className="text-xs text-neutral-400">Account Name: Nathan Yohannes (Commercial Bank of Ethiopia)</p>
-                                </div>
+                            {/* Account Info */}
+                            <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
+                                <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Telebirr (Phone Transfer)</p>
+                                <p className="font-bold text-lg text-white mt-1">+251 930 614 550</p>
+                                <p className="text-xs text-neutral-400">Account Name: Nathan Yohannes</p>
                             </div>
 
                             {/* QR Code */}
