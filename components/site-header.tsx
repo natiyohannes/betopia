@@ -57,9 +57,11 @@ export function SiteHeader() {
                 <div className="flex flex-row items-center justify-between h-full relative">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-1 cursor-pointer shrink-0 z-10">
-                        <div className="text-[#ff385c] font-black text-2xl tracking-tighter">
-                            Betopia
-                        </div>
+                        <img 
+                            src="/logo.png" 
+                            alt="Betopia Logo" 
+                            className="h-10 md:h-12 w-auto object-contain rounded-md"
+                        />
                     </Link>
 
                     {/* Navigation - Centered */}
