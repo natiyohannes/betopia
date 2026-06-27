@@ -157,6 +157,7 @@ create table if not exists public.notifications (
 -- ─── RPC FUNCTIONS ──────────────────────────────────────────
 
 -- get_all_users (admin only)
+drop function if exists public.get_all_users();
 create or replace function public.get_all_users()
 returns table (
   id uuid,
@@ -191,6 +192,7 @@ end;
 $$;
 
 -- get_all_listings_admin (admin only)
+drop function if exists public.get_all_listings_admin();
 create or replace function public.get_all_listings_admin()
 returns table (
   id uuid,
@@ -240,6 +242,7 @@ end;
 $$;
 
 -- get_user_listings_admin (admin only)
+drop function if exists public.get_user_listings_admin(uuid);
 create or replace function public.get_user_listings_admin(target_user_id uuid)
 returns table (
   id uuid,
@@ -281,6 +284,7 @@ end;
 $$;
 
 -- set_user_role (admin only)
+drop function if exists public.set_user_role(uuid, text);
 create or replace function public.set_user_role(target_user_id uuid, new_role text)
 returns void language plpgsql security definer as $$
 begin
@@ -289,6 +293,7 @@ end;
 $$;
 
 -- verify_admin_code
+drop function if exists public.verify_admin_code(text);
 create or replace function public.verify_admin_code(code text)
 returns boolean language plpgsql security definer as $$
 begin
