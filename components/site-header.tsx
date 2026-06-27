@@ -18,7 +18,7 @@ export function SiteHeader() {
     const pathname = usePathname()
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutside = (event: PointerEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false)
             }
@@ -26,8 +26,8 @@ export function SiteHeader() {
                 setIsNotifOpen(false)
             }
         }
-        document.addEventListener("mousedown", handleClickOutside)
-        return () => document.removeEventListener("mousedown", handleClickOutside)
+        document.addEventListener("pointerdown", handleClickOutside)
+        return () => document.removeEventListener("pointerdown", handleClickOutside)
     }, [])
 
     useEffect(() => {
@@ -85,31 +85,36 @@ export function SiteHeader() {
                     {/* Actions - Right */}
                     <div className="flex items-center gap-4 md:gap-6 shrink-0 z-10">
                         {/* Profile Dropdown */}
-                        <div ref={dropdownRef} className="relative flex items-center gap-2 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
-                            <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center overflow-hidden border border-white/10">
-                                {user?.user_metadata?.avatar_url ? (
-                                    <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                                ) : (
-                                    <User size={20} className="text-neutral-400" />
-                                )}
+                        <div ref={dropdownRef} className="relative flex items-center gap-2 cursor-pointer">
+                            <div 
+                                className="flex items-center gap-2"
+                                onClick={() => setIsOpen(prev => !prev)}
+                            >
+                                <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center overflow-hidden border border-white/10">
+                                    {user?.user_metadata?.avatar_url ? (
+                                        <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={20} className="text-neutral-400" />
+                                    )}
+                                </div>
+                                <ChevronDown size={14} className={`text-neutral-400 transition-transform duration-200 ${isOpen ? 'text-white rotate-180' : ''}`} />
                             </div>
-                            <ChevronDown size={14} className={`text-neutral-400 transition-colors ${isOpen ? 'text-white rotate-180' : ''}`} />
 
                             {/* Dropdown Menu */}
                             <div className={`absolute top-12 right-0 bg-neutral-900 border border-white/10 shadow-2xl rounded-xl w-[200px] overflow-hidden transition-all z-50 ${isOpen ? 'block animate-in fade-in zoom-in duration-200' : 'hidden'}`}>
                                 {user ? (
                                     <>
-                                        <Link href="/dashboard" className="block px-4 py-3 hover:bg-white/5 font-semibold text-sm">Dashboard</Link>
-                                        <Link href="/dashboard/my-listings" className="block px-4 py-3 hover:bg-white/5 text-sm">My Listings</Link>
-                                        <Link href="/dashboard/saved" className="block px-4 py-3 hover:bg-white/5 text-sm">Wishlist</Link>
+                                        <Link href="/dashboard" onClick={() => setIsOpen(false)} className="block px-4 py-3 hover:bg-white/5 font-semibold text-sm">Dashboard</Link>
+                                        <Link href="/dashboard/my-listings" onClick={() => setIsOpen(false)} className="block px-4 py-3 hover:bg-white/5 text-sm">My Listings</Link>
+                                        <Link href="/dashboard/saved" onClick={() => setIsOpen(false)} className="block px-4 py-3 hover:bg-white/5 text-sm">Wishlist</Link>
                                         <div className="h-[1px] bg-white/10 my-1" />
-                                        <Link href="/dashboard/settings" className="block px-4 py-3 hover:bg-white/5 text-sm font-medium text-[#ff385c]">My Profile</Link>
+                                        <Link href="/dashboard/settings" onClick={() => setIsOpen(false)} className="block px-4 py-3 hover:bg-white/5 text-sm font-medium text-[#ff385c]">My Profile</Link>
                                         <div onClick={handleSignOut} className="block px-4 py-3 hover:bg-white/5 text-sm cursor-pointer border-t border-white/5">Log out</div>
                                     </>
                                 ) : (
                                     <>
-                                        <Link href="/login" className="block px-4 py-3 hover:bg-white/5 font-semibold text-sm">Log in</Link>
-                                        <Link href="/register" className="block px-4 py-3 hover:bg-white/5 text-sm">Sign up</Link>
+                                        <Link href="/login" onClick={() => setIsOpen(false)} className="block px-4 py-3 hover:bg-white/5 font-semibold text-sm">Log in</Link>
+                                        <Link href="/register" onClick={() => setIsOpen(false)} className="block px-4 py-3 hover:bg-white/5 text-sm">Sign up</Link>
                                     </>
                                 )}
                             </div>
@@ -137,7 +142,10 @@ export function SiteHeader() {
                                         <button onClick={clearAll} className="text-xs text-[#ff385c] hover:underline font-medium">Clear all</button>
                                     )}
                                 </div>
-                                <div className="overflow-y-auto max-h-[400px]">
+                                <div 
+                                    className="overflow-y-auto max-h-[400px]"
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                >
                                     {notifications.length === 0 ? (
                                         <div className="p-10 text-center text-neutral-500 text-sm">
                                             No notifications yet
