@@ -1,10 +1,43 @@
 -- ============================================================
--- BETOPIA.ET - Full Supabase Schema Setup
+-- BETOPIA.ET - Full Supabase Schema Setup & Migrations
 -- Run this in: Supabase Dashboard → SQL Editor → New Query
 -- ============================================================
 
 -- ─── EXTENSIONS ─────────────────────────────────────────────
 create extension if not exists "uuid-ossp";
+
+-- ─── MIGRATIONS (ALTERS EXISTING TABLES) ─────────────────────
+-- Profiles alterations
+alter table public.profiles add column if not exists subscription_status text not null default 'inactive';
+
+-- Listings alterations
+alter table public.listings add column if not exists sqft numeric;
+alter table public.listings add column if not exists floor_number int;
+alter table public.listings add column if not exists is_furnished boolean default false;
+alter table public.listings add column if not exists is_rent boolean default true;
+alter table public.listings add column if not exists street_address text;
+alter table public.listings add column if not exists nearby_places text;
+alter table public.listings add column if not exists rules text;
+alter table public.listings add column if not exists location_city text;
+alter table public.listings add column if not exists location_neighborhood text;
+alter table public.listings add column if not exists latitude numeric;
+alter table public.listings add column if not exists longitude numeric;
+alter table public.listings add column if not exists average_rating numeric default 0;
+alter table public.listings add column if not exists total_ratings int default 0;
+
+-- Change listings.amenities to jsonb if it is currently text[] array
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns 
+    where table_name='listings' and column_name='amenities' and data_type='ARRAY'
+  ) then
+    alter table public.listings alter column amenities type jsonb using '{}'::jsonb;
+  end if;
+end $$;
+
+alter table public.listings add column if not exists amenities jsonb default '{}'::jsonb;
+
 
 -- ─── PROFILES ───────────────────────────────────────────────
 create table if not exists public.profiles (
@@ -13,6 +46,7 @@ create table if not exists public.profiles (
   avatar_url text,
   phone_number text,
   role text not null default 'user', -- 'user' | 'admin'
+  subscription_status text not null default 'inactive', -- 'active' | 'inactive'
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -26,7 +60,8 @@ begin
     new.id,
     new.raw_user_meta_data->>'full_name',
     new.raw_user_meta_data->>'avatar_url'
-  );
+  )
+  on conflict (id) do nothing;
   return new;
 end;
 $$;
@@ -43,17 +78,26 @@ create table if not exists public.listings (
   title text,
   description text,
   price numeric,
-  location text,
-  city text,
   property_type text,
-  listing_type text, -- 'rent' | 'sale'
   bedrooms int,
   bathrooms int,
-  area numeric,
+  sqft numeric,
+  floor_number int,
+  is_furnished boolean default false,
+  is_rent boolean default true,
+  street_address text,
+  nearby_places text,
+  rules text,
+  location_city text,
+  location_neighborhood text,
+  latitude numeric,
+  longitude numeric,
   images text[],
-  amenities text[],
+  amenities jsonb default '{}'::jsonb,
   status text default 'draft', -- 'draft' | 'paid' | 'active' | 'rejected' | 'inactive'
   views_count int default 0,
+  average_rating numeric default 0,
+  total_ratings int default 0,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -123,21 +167,23 @@ returns table (
   email text,
   created_at timestamptz,
   last_sign_in_at timestamptz,
-  listings_count bigint
+  listing_count bigint,
+  subscription_status text
 )
 language plpgsql security definer as $$
 begin
   return query
     select
-      p.id,
-      p.full_name,
-      p.avatar_url,
-      p.phone_number,
-      p.role,
-      u.email,
-      p.created_at,
-      u.last_sign_in_at,
-      (select count(*) from public.listings l where l.user_id = p.id) as listings_count
+      p.id::uuid,
+      p.full_name::text,
+      p.avatar_url::text,
+      p.phone_number::text,
+      p.role::text,
+      u.email::text,
+      p.created_at::timestamptz,
+      u.last_sign_in_at::timestamptz,
+      (select count(*) from public.listings l where l.user_id = p.id)::bigint as listing_count,
+      p.subscription_status::text
     from public.profiles p
     join auth.users u on u.id = p.id
     order by p.created_at desc;
@@ -151,9 +197,9 @@ returns table (
   title text,
   status text,
   price numeric,
-  city text,
+  location_city text,
   property_type text,
-  listing_type text,
+  is_rent boolean,
   views_count int,
   created_at timestamptz,
   user_id uuid,
@@ -169,23 +215,23 @@ language plpgsql security definer as $$
 begin
   return query
     select
-      l.id,
-      l.title,
-      l.status,
-      l.price,
-      l.city,
-      l.property_type,
-      l.listing_type,
-      l.views_count,
-      l.created_at,
-      p.id as user_id,
-      p.full_name,
-      p.avatar_url,
-      p.phone_number,
-      pay.transaction_id,
-      pay.provider as payment_provider,
-      pay.amount as payment_amount,
-      pay.status as payment_status
+      l.id::uuid,
+      l.title::text,
+      l.status::text,
+      l.price::numeric,
+      l.location_city::text,
+      l.property_type::text,
+      l.is_rent::boolean,
+      l.views_count::int,
+      l.created_at::timestamptz,
+      p.id::uuid as user_id,
+      p.full_name::text,
+      p.avatar_url::text,
+      p.phone_number::text,
+      pay.transaction_id::text,
+      pay.provider::text as payment_provider,
+      pay.amount::numeric as payment_amount,
+      pay.status::text as payment_status
     from public.listings l
     join public.profiles p on p.id = l.user_id
     left join public.payments pay on pay.listing_id = l.id
@@ -200,9 +246,9 @@ returns table (
   title text,
   status text,
   price numeric,
-  city text,
+  location_city text,
   property_type text,
-  listing_type text,
+  is_rent boolean,
   views_count int,
   created_at timestamptz,
   transaction_id text,
@@ -214,19 +260,19 @@ language plpgsql security definer as $$
 begin
   return query
     select
-      l.id,
-      l.title,
-      l.status,
-      l.price,
-      l.city,
-      l.property_type,
-      l.listing_type,
-      l.views_count,
-      l.created_at,
-      pay.transaction_id,
-      pay.provider as payment_provider,
-      pay.amount as payment_amount,
-      pay.status as payment_status
+      l.id::uuid,
+      l.title::text,
+      l.status::text,
+      l.price::numeric,
+      l.location_city::text,
+      l.property_type::text,
+      l.is_rent::boolean,
+      l.views_count::int,
+      l.created_at::timestamptz,
+      pay.transaction_id::text,
+      pay.provider::text as payment_provider,
+      pay.amount::numeric as payment_amount,
+      pay.status::text as payment_status
     from public.listings l
     left join public.payments pay on pay.listing_id = l.id
     where l.user_id = target_user_id

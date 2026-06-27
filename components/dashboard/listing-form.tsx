@@ -236,7 +236,7 @@ export default function ListingForm({ initialData, listingId, isEditing = false 
                                 {isEditing ? "Update your property details." : "Fill out the details to get your property listed."}
                             </CardDescription>
                         </div>
-                        <div className="text-sm font-medium bg-secondary px-3 py-1 rounded-full text-black">
+                        <div className="text-sm font-medium bg-secondary px-3 py-1 rounded-full text-white">
                             Step {step} of 2
                         </div>
                     </div>
@@ -245,8 +245,8 @@ export default function ListingForm({ initialData, listingId, isEditing = false 
 
                     {step === 1 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
-                            <div className="space-y-2 col-span-2 text-black">
-                                <Label htmlFor="title" className="text-black">Listing Title</Label>
+                            <div className="space-y-2 col-span-2">
+                                <Label htmlFor="title">Listing Title</Label>
                                 <Input id="title" name="title" value={formData.title} onChange={handleChange} required placeholder="e.g. Modern Apartment in Bole" />
                             </div>
 
