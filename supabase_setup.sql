@@ -71,6 +71,20 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- ─── BACKFILL PROFILES FOR EXISTING USERS ──────────────────
+-- This fixes "listings_user_id_fkey" errors for users who signed up
+-- before the trigger was created (e.g. Google OAuth users).
+insert into public.profiles (id, full_name, avatar_url)
+select
+  u.id,
+  u.raw_user_meta_data->>'full_name',
+  u.raw_user_meta_data->>'avatar_url'
+from auth.users u
+where not exists (
+  select 1 from public.profiles p where p.id = u.id
+)
+on conflict (id) do nothing;
+
 -- ─── LISTINGS ───────────────────────────────────────────────
 create table if not exists public.listings (
   id uuid primary key default uuid_generate_v4(),
