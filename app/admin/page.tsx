@@ -39,7 +39,7 @@ interface UserListing {
     payments?: any
 }
 
-type AdminView = 'users' | 'user_listings' | 'all_listings'
+type AdminView = 'users' | 'user_listings' | 'all_listings' | 'pending_payments'
 
 // ── Modal: Set Security Code when granting admin ────────────────
 function AdminCodeModal({
@@ -158,12 +158,12 @@ export default function AdminPage() {
     const [allListings, setAllListings] = useState<UserListing[]>([])
     const [loadingAllListings, setLoadingAllListings] = useState(false)
     const [view, setView] = useState<AdminView>('users')
-    const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
+    const [actionMenu, setActionMenu] = useState<string | null>(null)
+    const [globalPublishedCount, setGlobalPublishedCount] = useState<number | null>(null)
     const [userListings, setUserListings] = useState<UserListing[]>([])
     const [loadingListings, setLoadingListings] = useState(false)
     const [roleUpdateLoading, setRoleUpdateLoading] = useState<string | null>(null)
     const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null)
-    const [actionMenu, setActionMenu] = useState<string | null>(null)
     const [adminCodeModal, setAdminCodeModal] = useState<UserRow | null>(null)
 
     // Check auth on mount
@@ -238,6 +238,16 @@ export default function AdminPage() {
         } else {
             setUsers(data || [])
         }
+        
+        const { count } = await supabase
+            .from('listings')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'published')
+            
+        if (count !== null) {
+            setGlobalPublishedCount(count)
+        }
+
         setLoading(false)
     }, [])
 
@@ -533,7 +543,7 @@ export default function AdminPage() {
                         { label: "Total Users", value: users.length, color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
                         { label: "Admins", value: users.filter(u => u.role === 'admin').length, color: "text-[#ff385c]", bg: "bg-[#ff385c]/10 border-[#ff385c]/20" },
                         { label: "Active Members", value: users.filter(u => u.subscription_status === 'active').length, color: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
-                        { label: "Total Listings", value: users.reduce((a, u) => a + Number(u.listing_count), 0), color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+                        { label: "Total Listings", value: globalPublishedCount !== null ? globalPublishedCount : users.reduce((a, u) => a + Number(u.listing_count), 0), color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
                     ].map(stat => (
                         <div key={stat.label} className={`border ${stat.bg} rounded-3xl p-6 flex flex-col gap-2`}>
                             <span className={`text-3xl font-black ${stat.color}`}>{stat.value}</span>
@@ -557,6 +567,13 @@ export default function AdminPage() {
                     >
                         All Listings
                         {view === 'all_listings' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ff385c]" />}
+                    </button>
+                    <button
+                        onClick={() => { setView('pending_payments'); fetchAllListings(); }}
+                        className={`text-xs font-black uppercase tracking-[0.2em] pb-4 transition-all relative ${view === 'pending_payments' ? 'text-white' : 'text-neutral-500 hover:text-white'}`}
+                    >
+                        Pending Payments
+                        {view === 'pending_payments' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ff385c]" />}
                     </button>
                 </div>
 
@@ -678,14 +695,16 @@ export default function AdminPage() {
                     </div>
                 )}
 
-                {/* ── VIEW: ALL LISTINGS ── */}
-                {view === 'all_listings' && (
+                {/* ── VIEW: ALL LISTINGS & PENDING PAYMENTS ── */}
+                {(view === 'all_listings' || view === 'pending_payments') && (
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                              <div className="flex items-center gap-4">
-                                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Global Listings</h2>
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tight">
+                                    {view === 'pending_payments' ? 'Pending Payments' : 'Global Listings'}
+                                </h2>
                                 <span className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] font-black text-neutral-500 uppercase tracking-widest">
-                                    {allListings.length} total properties
+                                    {view === 'pending_payments' ? allListings.filter(l => l.status === 'pending_payment').length : allListings.length} total properties
                                 </span>
                              </div>
                              <button 
@@ -718,7 +737,7 @@ export default function AdminPage() {
                             </div>
                         ) : (
                             <div className="grid gap-4">
-                                {allListings.map((listing: any) => {
+                                {(view === 'pending_payments' ? allListings.filter(l => l.status === 'pending_payment') : allListings).map((listing: any) => {
                                     const payment = listing.payments ? (Array.isArray(listing.payments) ? listing.payments[0] : listing.payments) : null;
                                     return (
                                         <div key={listing.id} className="group bg-neutral-950 border border-white/10 rounded-3xl p-5 flex flex-col md:flex-row items-center gap-6 hover:border-white/20 transition-all">
