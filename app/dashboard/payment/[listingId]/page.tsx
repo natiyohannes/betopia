@@ -66,18 +66,6 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
         fetchData()
     }, [params.listingId])
 
-    const handleOpenPayrify = () => {
-        const plan = plans.find(p => p.id === selectedPlan) || PLANS.find(p => p.id === selectedPlan)
-        if (plan) {
-            const name = plan.name.toLowerCase()
-            let link = PAYRIFY_LINKS['standard']
-            if (name.includes('premium')) link = PAYRIFY_LINKS['premium']
-            else if (name.includes('testing')) link = PAYRIFY_LINKS['testing']
-            
-            window.open(link, '_blank')
-            setPaymentStep(2)
-        }
-    }
 
     const handleConfirmPayment = async () => {
         if (!transactionId.trim()) {

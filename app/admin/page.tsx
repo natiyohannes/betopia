@@ -859,7 +859,8 @@ export default function AdminPage() {
                         {loading ? (
                             <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#ff385c]" size={36} /></div>
                         ) : (
-                            <div className="bg-neutral-950 border border-white/10 rounded-[32px] overflow-hidden">
+                            <div className="bg-neutral-950 border border-white/10 rounded-[32px] overflow-hidden overflow-x-auto">
+                                <div className="min-w-[800px] md:min-w-0">
                                 {/* Table header */}
                                 <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-600">
                                     <div className="col-span-4">User</div>
@@ -980,6 +981,7 @@ export default function AdminPage() {
                                         </div>
                                     ))
                                 )}
+                                </div>
                             </div>
                         )}
                     </div>
