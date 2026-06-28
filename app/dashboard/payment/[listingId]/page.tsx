@@ -22,7 +22,7 @@ const PLANS = [
         name: 'Premium Plan', // Featured
         price: 500,
         duration: 60,
-        features: ['Visible for 60 days', 'Featured at top', 'Unlimited Photos', 'Priority Support', 'Video Tour']
+        features: ['Visible for 60 days', 'Featured at top', 'Unlimited Photos', 'Priority Support']
     },
     {
         id: 'testing',
@@ -239,7 +239,7 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                                 <span className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Scan QR Code to Pay</span>
                                 <div className="bg-white p-3 rounded-2xl w-48 h-48 overflow-hidden shadow-2xl">
                                     <img 
-                                        src="/payment_qr.jpg" 
+                                        src={activePlan?.id === 'standard' ? '/payment_qr_200.png' : '/payment_qr_500.png'} 
                                         alt="Telebirr Payment QR Code" 
                                         className="w-full h-full object-contain"
                                     />
