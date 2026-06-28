@@ -58,15 +58,16 @@ export default function MyListingsPage() {
         if (statusFilter === 'all') return true;
         if (statusFilter === 'active') return l.status === 'published';
         if (statusFilter === 'pending') return l.status === 'pending_payment' || l.status === 'paid';
+        if (statusFilter === 'rejected') return l.status === 'rejected';
         return l.status === statusFilter;
     })
 
     const tabs = [
         { id: 'all', label: 'All Listings' },
         { id: 'active', label: 'Active' },
-        { id: 'pending', label: 'Pending' },
+        { id: 'pending', label: `Pending (${listings.filter(l => l.status === 'pending_payment' || l.status === 'paid').length})` },
         { id: 'draft', label: 'Drafts' },
-        { id: 'expired', label: 'Expired' },
+        { id: 'rejected', label: `Rejected (${listings.filter(l => l.status === 'rejected').length})` },
     ]
 
     const handleRenew = (id: string) => {
@@ -147,7 +148,9 @@ export default function MyListingsPage() {
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filteredListings.map((listing: Listing) => (
-                        <Card key={listing.id} className="flex flex-col overflow-hidden border-white/10 bg-card hover:border-white/20 transition-all group">
+                        <Card key={listing.id} className={`flex flex-col overflow-hidden border-white/10 bg-card hover:border-white/20 transition-all group ${
+                            listing.status === 'rejected' ? 'border-red-500/20 bg-red-500/5' : ''
+                        }`}>
                             <div className="relative h-48 bg-neutral-900 overflow-hidden">
                                 {listing.images && listing.images[0] ? (
                                     <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
@@ -157,13 +160,28 @@ export default function MyListingsPage() {
                                 <div className="absolute top-3 right-3">
                                     <Badge variant={
                                         listing.status === 'published' ? 'default' :
-                                            listing.status === 'draft' ? 'secondary' :
-                                                listing.status === 'expired' ? 'destructive' : 'outline'
+                                        listing.status === 'rejected' ? 'destructive' :
+                                        listing.status === 'draft' ? 'secondary' : 'outline'
                                     }>
-                                        {listing.status.replace('_', ' ')}
+                                        {listing.status === 'paid' ? 'Pending Approval' : listing.status.replace('_', ' ')}
                                     </Badge>
                                 </div>
                             </div>
+
+                            {/* Pending approval notice */}
+                            {(listing.status === 'paid') && (
+                                <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center gap-2">
+                                    <span className="text-amber-400 text-xs font-bold">⏱️ Pending Approval — within 12 hours</span>
+                                </div>
+                            )}
+
+                            {/* Rejected notice */}
+                            {listing.status === 'rejected' && (
+                                <div className="bg-red-500/10 border-b border-red-500/20 px-4 py-2">
+                                    <p className="text-red-400 text-xs font-bold">❌ This listing was rejected by admin</p>
+                                </div>
+                            )}
+
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-lg truncate text-white" title={listing.title}>{listing.title}</CardTitle>
                                 <div className="text-2xl font-bold text-white mt-1">ETB {listing.price.toLocaleString()}</div>
@@ -180,9 +198,11 @@ export default function MyListingsPage() {
                             </CardContent>
                             <CardFooter className="flex justify-between border-t border-white/10 bg-white/[0.02] p-4">
                                 <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" asChild className="hover:bg-white/5 text-neutral-300 border-white/10">
-                                        <Link href={`/dashboard/edit/${listing.id}`}>Edit Details</Link>
-                                    </Button>
+                                    {listing.status !== 'rejected' && (
+                                        <Button variant="outline" size="sm" asChild className="hover:bg-white/5 text-neutral-300 border-white/10">
+                                            <Link href={`/dashboard/edit/${listing.id}`}>Edit Details</Link>
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="ghost"
                                         size="sm"

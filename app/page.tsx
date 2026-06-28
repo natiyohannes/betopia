@@ -22,11 +22,7 @@ async function getListings(searchParams: { [key: string]: string | undefined }) 
                 phone_number
             )
         `)
-
-    // Fetching all listings regardless of status or active state as requested
-    query = query.order('created_at', { ascending: false })
-
-    // All properties will be shown always, no filtering applied.
+        .eq('status', 'published') // Only show approved/published listings publicly
 
     if (searchParams.sort === 'highest_rating') {
         query = query.order('average_rating', { ascending: false }).order('created_at', { ascending: false })

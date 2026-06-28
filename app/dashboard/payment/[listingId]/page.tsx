@@ -42,42 +42,25 @@ const PAYRIFY_LINKS: Record<string, string> = {
 export default function PaymentPage({ params }: { params: { listingId: string } }) {
     const router = useRouter()
     const [listing, setListing] = useState<any>(null)
-    const [plans, setPlans] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [processing, setProcessing] = useState(false)
-    const [selectedPlan, setSelectedPlan] = useState<string>("")
+    const [selectedPlan, setSelectedPlan] = useState<string>("premium")
     const [success, setSuccess] = useState(false)
-
-    // Payrify specific state
-    const [paymentStep, setPaymentStep] = useState<1 | 2>(1)
     const [transactionId, setTransactionId] = useState("")
     const [error, setError] = useState("")
+
+    // Use hardcoded plans — pricing_plans table may be empty
+    const plans = PLANS
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true)
-            // Fetch Listing
             const { data: listingData } = await supabase
                 .from('listings')
                 .select('*')
                 .eq('id', params.listingId)
                 .single()
-
             if (listingData) setListing(listingData)
-
-            // Fetch Plans
-            const { data: plansData } = await supabase
-                .from('pricing_plans')
-                .select('*')
-                .eq('active', true)
-                .order('price', { ascending: true })
-
-            if (plansData) {
-                setPlans(plansData)
-                // Set default plan to "Standard" if found, else first one
-                const standard = plansData.find(p => p.name.toLowerCase().includes('standard'))
-                setSelectedPlan(standard ? standard.id : plansData[0]?.id)
-            }
             setLoading(false)
         }
         fetchData()
@@ -118,7 +101,6 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
             const { error: paymentError } = await supabase.from('payments').insert({
                 user_id: user.id,
                 listing_id: params.listingId,
-                plan_id: plan.id,
                 amount: plan.price,
                 provider: 'manual',
                 status: 'pending',
@@ -132,14 +114,10 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                 return
             }
 
-            // Set Listing to Pending Approval (Admin will publish)
-            const { error: updateError } = await supabase.from('listings').update({
+            // Set listing to pending admin approval
+            await supabase.from('listings').update({
                 status: 'paid',
             }).eq('id', params.listingId)
-
-            if (updateError) {
-                console.error("Update Error", updateError)
-            }
 
             setSuccess(true)
             setProcessing(false)
@@ -148,7 +126,7 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
             setTimeout(() => {
                 router.push('/dashboard/my-listings')
                 router.refresh()
-            }, 3000)
+            }, 5000)
         } else {
             setError("Authentication error. Please ensure you are logged in.")
             setProcessing(false)
@@ -165,22 +143,30 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
 
     if (success) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 animate-in fade-in zoom-in duration-500">
-                <div className="rounded-full bg-green-100 p-8">
-                    <CheckCircle className="h-16 w-16 text-green-600" />
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-in fade-in zoom-in duration-500 px-4 text-center">
+                <div className="rounded-full bg-amber-500/10 border-2 border-amber-500/30 p-8">
+                    <ShieldCheck className="h-16 w-16 text-amber-400" />
                 </div>
-                <div className="text-center space-y-2">
-                    <h2 className="text-3xl font-bold">Payment Verified!</h2>
-                    <p className="text-muted-foreground text-lg">Your property <strong>{listing.title}</strong> is now pending admin approval.</p>
+                <div className="space-y-3 max-w-md">
+                    <h2 className="text-3xl font-black text-white uppercase tracking-wider">Pending Approval</h2>
+                    <p className="text-neutral-300 text-lg leading-relaxed">
+                        Your payment for <strong className="text-white">{listing.title}</strong> has been submitted successfully.
+                    </p>
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mt-4">
+                        <p className="text-amber-300 font-semibold text-sm">
+                            ⏱️ You will receive approval within the next <strong>12 hours</strong>.
+                        </p>
+                        <p className="text-neutral-500 text-xs mt-1">Our team reviews all payments manually. We'll notify you once your listing goes live.</p>
+                    </div>
                 </div>
-                <Button onClick={() => router.push('/dashboard/my-listings')} size="lg" className="mt-4">
-                    Go to My Listings
+                <Button onClick={() => router.push('/dashboard/my-listings')} size="lg" className="bg-[#ff385c] hover:bg-[#e31c5f] text-white rounded-2xl px-10 h-14 text-lg font-black">
+                    View My Listings
                 </Button>
             </div>
         )
     }
 
-    const activePlan = plans.find(p => p.id === selectedPlan)
+    const activePlan = plans.find(p => p.id === selectedPlan) || PLANS[1]
 
     return (
         <div className="max-w-5xl mx-auto py-10 px-4">
@@ -190,12 +176,15 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mb-12">
-                {plans.map((plan) => (
+                {PLANS.filter(p => p.id !== 'testing').map((plan) => (
                     <Card
                         key={plan.id}
-                        className={`cursor-pointer transition-all hover:shadow-lg relative overflow-hidden flex flex-col ${selectedPlan === plan.id ? 'border-[#ff385c] border-2 shadow-md bg-rose-50/50 scale-[1.02]' : 'border-gray-200'
-                            }`}
-                        onClick={() => { setSelectedPlan(plan.id); setPaymentStep(1); }}
+                        className={`cursor-pointer transition-all hover:shadow-lg relative overflow-hidden flex flex-col ${
+                            selectedPlan === plan.id
+                                ? 'border-[#ff385c] border-2 shadow-xl bg-[#ff385c]/5 scale-[1.02]'
+                                : 'border-white/10 bg-neutral-900 text-white'
+                        }`}
+                        onClick={() => setSelectedPlan(plan.id)}
                     >
                         {selectedPlan === plan.id && (
                             <div className="absolute top-0 right-0 bg-[#ff385c] text-white px-3 py-1 text-xs font-bold rounded-bl-lg shadow-sm">
@@ -203,24 +192,21 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                             </div>
                         )}
                         <CardHeader>
-                            <CardTitle>{plan.name}</CardTitle>
-                            <div className="mt-2 text-black">
-                                <span className="text-3xl font-bold">ETB {plan.price}</span>
-                                <span className="text-muted-foreground text-sm"> / listing</span>
+                            <CardTitle className="text-white">{plan.name}</CardTitle>
+                            <div className="mt-2">
+                                <span className="text-3xl font-bold text-white">ETB {plan.price}</span>
+                                <span className="text-neutral-400 text-sm"> / listing</span>
                             </div>
-                            <CardDescription className="font-medium text-[#ff385c] mt-1">{plan.duration_days} days visibility</CardDescription>
+                            <CardDescription className="font-medium text-[#ff385c] mt-1">{plan.duration} days visibility</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-1">
-                            <p className="text-sm text-gray-600 mb-4 h-10">{plan.description}</p>
                             <ul className="space-y-3 text-sm">
-                                <li className="flex items-start gap-2">
-                                    <CheckCircle size={18} className="text-green-600 shrink-0" />
-                                    <span>{plan.is_featured ? "Priority Featured Placement" : "Standard Placement"}</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <CheckCircle size={18} className="text-green-600 shrink-0" />
-                                    <span>{plan.duration_days} Days Live Status</span>
-                                </li>
+                                {plan.features.map((f, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                        <CheckCircle size={16} className="text-green-500 shrink-0 mt-0.5" />
+                                        <span className="text-neutral-300">{f}</span>
+                                    </li>
+                                ))}
                             </ul>
                         </CardContent>
                     </Card>
@@ -270,7 +256,7 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                                         className="w-full h-full object-contain"
                                     />
                                 </div>
-                                <span className="text-xs text-neutral-500">Nathan (+251930******550)</span>
+                                <span className="text-xs text-neutral-500">Nathan (+251930614550)</span>
                             </div>
 
                             {/* Transaction ID Input */}

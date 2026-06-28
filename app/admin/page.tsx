@@ -954,7 +954,7 @@ export default function AdminPage() {
                                                     </>
                                                 )}
                                                 {actionMenu === user.id && (
-                                                    <div className="absolute right-0 top-10 z-50 bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 p-2 w-60 space-y-1 max-h-72 overflow-y-auto">
+                                                    <div className="absolute right-0 bottom-full mb-2 z-50 bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 p-2 w-60 space-y-1">
                                                         <p className="text-[10px] font-black uppercase tracking-widest text-neutral-600 px-4 py-1">Set Role</p>
                                                         {(['user', 'admin', 'agent'] as const).map(role => (
                                                             <button
