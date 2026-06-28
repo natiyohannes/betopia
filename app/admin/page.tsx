@@ -860,9 +860,9 @@ export default function AdminPage() {
                             <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#ff385c]" size={36} /></div>
                         ) : (
                             <div className="bg-neutral-950 border border-white/10 rounded-[32px] overflow-hidden overflow-x-auto">
-                                <div className="min-w-[800px] md:min-w-0">
+                                <div>
                                 {/* Table header */}
-                                <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-600">
+                                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-600">
                                     <div className="col-span-4">User</div>
                                     <div className="col-span-2 hidden md:block">Joined</div>
                                     <div className="col-span-2 hidden lg:block">Last Seen</div>
@@ -879,10 +879,10 @@ export default function AdminPage() {
                                     filteredUsers.map((user, idx) => (
                                         <div
                                             key={user.id}
-                                            className={`grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-white/[0.02] transition-colors relative ${idx !== filteredUsers.length - 1 ? 'border-b border-white/5' : ''}`}
+                                            className={`flex flex-col md:grid md:grid-cols-12 gap-4 px-6 py-4 items-start md:items-center hover:bg-white/[0.02] transition-colors relative ${idx !== filteredUsers.length - 1 ? 'border-b border-white/5' : ''}`}
                                         >
                                             {/* User Info */}
-                                            <div className="col-span-4 flex items-center gap-3 min-w-0">
+                                            <div className="w-full md:w-auto md:col-span-4 flex items-center justify-between md:justify-start gap-3 min-w-0">
                                                 <div className="w-10 h-10 rounded-2xl bg-neutral-900 border border-white/10 flex items-center justify-center shrink-0">
                                                     {user.role === 'admin'
                                                         ? <Crown size={18} className="text-[#ff385c]" />
@@ -896,12 +896,12 @@ export default function AdminPage() {
                                             </div>
 
                                             {/* Joined */}
-                                            <div className="col-span-2 hidden md:block text-xs text-neutral-500 font-medium">
+                                            <div className="w-full md:w-auto flex justify-between md:block md:col-span-2 text-xs text-neutral-500 font-medium"><span className="md:hidden font-black uppercase tracking-widest text-[10px] text-neutral-600">Joined</span>
                                                 {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </div>
 
                                             {/* Last Login */}
-                                            <div className="col-span-2 hidden lg:block text-xs text-neutral-500 font-medium">
+                                            <div className="w-full md:w-auto hidden lg:block md:col-span-2 text-xs text-neutral-500 font-medium">
                                                 {user.last_sign_in_at
                                                     ? new Date(user.last_sign_in_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                                                     : 'Never'
@@ -909,10 +909,10 @@ export default function AdminPage() {
                                             </div>
 
                                             {/* Listings */}
-                                            <div className="col-span-1 text-center text-white font-black">{user.listing_count}</div>
+                                            <div className="w-full md:w-auto flex justify-between md:justify-center md:col-span-1 text-white font-black text-sm"><span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-neutral-600">Listings</span><span>{user.listing_count}</span></div>
 
                                             {/* Role Badge */}
-                                            <div className="col-span-2 flex justify-center">
+                                            <div className="w-full md:w-auto flex justify-between md:justify-center md:col-span-2 items-center"><span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-neutral-600">Role</span>
                                                 <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
                                                     user.role === 'admin'
                                                         ? 'bg-[#ff385c]/10 text-[#ff385c] border-[#ff385c]/20'
@@ -925,7 +925,7 @@ export default function AdminPage() {
                                             </div>
 
                                             {/* Actions */}
-                                            <div className="col-span-1 flex justify-end items-center gap-2 relative">
+                                            <div className="w-full md:w-auto flex justify-end md:justify-end md:col-span-1 items-center gap-2 relative mt-2 pt-4 border-t border-white/5 md:mt-0 md:pt-0 md:border-0">
                                                 {roleUpdateLoading === user.id ? (
                                                     <Loader2 size={18} className="animate-spin text-[#ff385c]" />
                                                 ) : (

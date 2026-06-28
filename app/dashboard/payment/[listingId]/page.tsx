@@ -182,7 +182,7 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                         <CardHeader>
                             <CardTitle className="text-white">{plan.name}</CardTitle>
                             <div className="mt-2">
-                                <span className="text-3xl font-bold text-white">ETB {plan.price}</span>
+                                <span className="text-3xl font-bold text-white">{plan.price} ETB</span>
                                 <span className="text-neutral-400 text-sm"> / listing</span>
                             </div>
                             <CardDescription className="font-medium text-[#ff385c] mt-1">{plan.duration} days visibility</CardDescription>
@@ -215,7 +215,7 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                             </div>
                             <div className="flex justify-between items-center pt-2 border-t border-white/10 text-sm">
                                 <span className="font-medium text-neutral-400">Total Amount</span>
-                                <span className="font-bold text-xl text-[#ff385c]">ETB {activePlan?.price}</span>
+                                <span className="font-bold text-xl text-[#ff385c]">{activePlan?.price} ETB</span>
                             </div>
                         </div>
 
@@ -223,14 +223,14 @@ export default function PaymentPage({ params }: { params: { listingId: string } 
                             <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-sm leading-relaxed">
                                 <p className="font-bold text-white mb-2 uppercase tracking-wider text-xs text-[#ff385c]">Payment Instructions</p>
                                 <p className="text-neutral-300">
-                                    Please transfer <strong className="text-white">ETB {activePlan?.price}</strong> to the Telebirr account below. After transferring, copy the <strong className="text-white">Transaction Reference ID</strong> (e.g. FT26...) from your confirmation SMS/app and paste it in the box below.
+                                    Please transfer <strong className="text-white">{activePlan?.price} ETB</strong> to the Telebirr account below. After transferring, copy the <strong className="text-white">Transaction Reference ID</strong> (e.g. FT26...) from your confirmation SMS/app and paste it in the box below.
                                 </p>
                             </div>
 
                             {/* Account Info */}
                             <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
                                 <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Telebirr (Phone Transfer)</p>
-                                <p className="font-bold text-lg text-white mt-1">+251 930 614 550</p>
+                                <p className="font-bold text-lg text-white mt-1">+251930614550</p>
                                 <p className="text-xs text-neutral-400">Account Name: Nathan Yohannes</p>
                             </div>
 
