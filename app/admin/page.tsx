@@ -158,6 +158,7 @@ export default function AdminPage() {
     const [allListings, setAllListings] = useState<UserListing[]>([])
     const [loadingAllListings, setLoadingAllListings] = useState(false)
     const [view, setView] = useState<AdminView>('users')
+    const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
     const [actionMenu, setActionMenu] = useState<string | null>(null)
     const [globalPublishedCount, setGlobalPublishedCount] = useState<number | null>(null)
     const [userListings, setUserListings] = useState<UserListing[]>([])
