@@ -44,17 +44,21 @@ type AdminView = 'users' | 'user_listings' | 'all_listings' | 'pending_payments'
 // ── Modal: Set Security Code when granting admin ────────────────
 function AdminCodeModal({
     user,
+    targetRole,
     onConfirm,
     onClose,
 }: {
     user: UserRow
-    onConfirm: (userId: string, code: string, adminConfirm: string) => void
+    targetRole: string
+    onConfirm: (userId: string, code: string | null, adminConfirm: string) => void
     onClose: () => void
 }) {
     const [newUserCode, setNewUserCode] = useState("")
     const [adminConfirmCode, setAdminConfirmCode] = useState("")
     const [showNew, setShowNew] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
+
+    const isPromotingAdmin = targetRole === 'admin';
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -63,9 +67,11 @@ function AdminCodeModal({
                     <div className="w-16 h-16 bg-[#ff385c]/10 border border-[#ff385c]/20 rounded-3xl flex items-center justify-center mx-auto">
                         <KeyRound className="text-[#ff385c]" size={28} />
                     </div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-widest">Elevate to Admin</h2>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-widest">
+                        {isPromotingAdmin ? "Elevate to Admin" : `Change Role to ${targetRole}`}
+                    </h2>
                     <p className="text-neutral-500 text-sm font-medium">
-                        Promoting <span className="text-white font-bold">{user.full_name || user.email}</span>
+                        Updating <span className="text-white font-bold">{user.full_name || user.email}</span>
                     </p>
                 </div>
 
@@ -94,28 +100,30 @@ function AdminCodeModal({
                         </div>
                     </div>
 
-                    {/* New User Code Input */}
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ff385c]">
-                            Set A Security Code For Them
-                        </label>
-                        <div className="relative">
-                            <input
-                                type={showNew ? "text" : "password"}
-                                value={newUserCode}
-                                onChange={e => setNewUserCode(e.target.value)}
-                                placeholder="Create a code for them"
-                                className="w-full bg-white/5 border border-[#ff385c]/30 focus:border-[#ff385c]/50 outline-none rounded-2xl h-14 px-5 pr-14 text-white font-mono tracking-widest transition-all"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowNew(!showNew)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white transition-colors text-xs font-black uppercase"
-                            >
-                                {showNew ? "hide" : "show"}
-                            </button>
+                    {/* New User Code Input (Only if promoting to admin) */}
+                    {isPromotingAdmin && (
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase tracking-[0.25em] text-[#ff385c]">
+                                Set A Security Code For Them
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showNew ? "text" : "password"}
+                                    value={newUserCode}
+                                    onChange={e => setNewUserCode(e.target.value)}
+                                    placeholder="Create a code for them"
+                                    className="w-full bg-white/5 border border-[#ff385c]/30 focus:border-[#ff385c]/50 outline-none rounded-2xl h-14 px-5 pr-14 text-white font-mono tracking-widest transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNew(!showNew)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white transition-colors text-xs font-black uppercase"
+                                >
+                                    {showNew ? "hide" : "show"}
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -126,17 +134,22 @@ function AdminCodeModal({
                         Cancel
                     </button>
                     <button
-                        onClick={() => { if (newUserCode.trim() && adminConfirmCode) onConfirm(user.id, newUserCode.trim(), adminConfirmCode.trim()) }}
-                        disabled={!newUserCode.trim() || !adminConfirmCode.trim()}
+                        onClick={() => { 
+                            if (adminConfirmCode.trim()) {
+                                onConfirm(user.id, isPromotingAdmin ? newUserCode.trim() : null, adminConfirmCode.trim()) 
+                            }
+                        }}
+                        disabled={!adminConfirmCode.trim() || (isPromotingAdmin && !newUserCode.trim())}
                         className="flex-1 h-12 bg-[#ff385c] hover:bg-[#e31c5f] text-white font-black rounded-2xl shadow-xl shadow-[#ff385c]/20 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
                     >
-                        <Crown size={16} /> Confirm Promotion
+                        <Crown size={16} /> Confirm
                     </button>
                 </div>
             </div>
         </div>
     )
 }
+
 
 export default function AdminPage() {
     const router = useRouter()
@@ -165,7 +178,7 @@ export default function AdminPage() {
     const [loadingListings, setLoadingListings] = useState(false)
     const [roleUpdateLoading, setRoleUpdateLoading] = useState<string | null>(null)
     const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null)
-    const [adminCodeModal, setAdminCodeModal] = useState<UserRow | null>(null)
+    const [pendingRoleUpdate, setPendingRoleUpdate] = useState<{ user: UserRow, role: string } | null>(null)
 
     // Check auth on mount
     useEffect(() => {
@@ -260,7 +273,7 @@ export default function AdminPage() {
     const handleSetRole = async (userId: string, role: string, securityCode?: string, adminConfirmCode?: string) => {
         setRoleUpdateLoading(userId)
         setActionMenu(null)
-        setAdminCodeModal(null)
+        setPendingRoleUpdate(null)
 
         // Verify current admin's authority first
         let isAuthorized = false
@@ -294,14 +307,10 @@ export default function AdminPage() {
         setRoleUpdateLoading(null)
     }
 
-    // When promoting to admin, show code modal first
-    const handleRoleAction = (user: UserRow, role: string, securityCode?: string, adminConfirm?: string) => {
-        if (role === 'admin' && user.role !== 'admin') {
-            setActionMenu(null)
-            setAdminCodeModal(user)
-        } else {
-            handleSetRole(user.id, role, securityCode, adminConfirm)
-        }
+    // When changing a role, show code modal first to verify authority
+    const handleRoleAction = (user: UserRow, role: string) => {
+        setActionMenu(null)
+        setPendingRoleUpdate({ user, role })
     }
 
     const [showFixModal, setShowFixModal] = useState(false)
@@ -491,11 +500,12 @@ export default function AdminPage() {
     return (
         <div className="min-h-screen bg-black text-white">
             {/* Admin Code Modal */}
-            {adminCodeModal && (
+            {pendingRoleUpdate && (
                 <AdminCodeModal
-                    user={adminCodeModal}
-                    onConfirm={(userId, code, confirm) => handleSetRole(userId, 'admin', code, confirm)}
-                    onClose={() => setAdminCodeModal(null)}
+                    user={pendingRoleUpdate.user}
+                    targetRole={pendingRoleUpdate.role}
+                    onConfirm={(userId, code, confirm) => handleSetRole(userId, pendingRoleUpdate.role, code || undefined, confirm)}
+                    onClose={() => setPendingRoleUpdate(null)}
                 />
             )}
 

@@ -1,7 +1,18 @@
--- 1. FIX set_user_role FUNCTION SIGNATURE & VALIDATION
--- This version accepts the optional security_code parameter to match what the frontend sends, preventing "function not found" errors.
+-- 1. ENSURE admin_code COLUMN EXISTS ON public.profiles TABLE
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='admin_code') THEN
+    ALTER TABLE public.profiles ADD COLUMN admin_code text;
+  END IF;
+END $$;
+
+
+-- 2. FIX set_user_role FUNCTION SIGNATURE & VALIDATION
+-- This version accepts the optional security_code parameter to match what the frontend sends.
+-- It correctly stores the security_code into the target admin's profile.
 DROP FUNCTION IF EXISTS public.set_user_role(uuid, text);
 DROP FUNCTION IF EXISTS public.set_user_role(uuid, text, text);
+DROP FUNCTION IF EXISTS public.set_user_role(uuid, text, text, text);
 
 CREATE OR REPLACE FUNCTION public.set_user_role(
   target_user_id uuid,
@@ -13,15 +24,48 @@ LANGUAGE plpgsql
 SECURITY DEFINER -- Runs with elevated privileges (bypasses RLS)
 AS $$
 BEGIN
-  -- Update role in the profiles table
+  -- Update role in the profiles table and save/update the security code if provided
   UPDATE public.profiles 
-  SET role = new_role 
+  SET role = new_role,
+      admin_code = CASE WHEN security_code IS NOT NULL THEN security_code ELSE admin_code END
   WHERE id = target_user_id;
 END;
 $$;
 
 
--- 2. FIX get_all_users RPC FUNCTION TO ONLY COUNT PUBLISHED LISTINGS
+-- 3. FIX verify_admin_code TO RUN FOR MULTIPLE DIFFERENT ADMIN CODES
+DROP FUNCTION IF EXISTS public.verify_admin_code(text);
+
+CREATE OR REPLACE FUNCTION public.verify_admin_code(code text)
+RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+AS $$
+DECLARE
+  user_role text;
+  user_code text;
+BEGIN
+  -- Allow the super admin code globally as fallback/master code
+  IF code = 'myname159' THEN
+    RETURN TRUE;
+  END IF;
+
+  -- Fetch the role and code for the current authenticated user
+  SELECT role, admin_code INTO user_role, user_code 
+  FROM public.profiles 
+  WHERE id = auth.uid();
+
+  -- Verify role is admin and code matches their personal stored code
+  IF user_role = 'admin' AND user_code = code THEN
+    RETURN TRUE;
+  END IF;
+
+  RETURN FALSE;
+END;
+$$;
+
+
+-- 4. FIX get_all_users RPC FUNCTION TO ONLY COUNT PUBLISHED LISTINGS
 DROP FUNCTION IF EXISTS public.get_all_users();
 
 CREATE OR REPLACE FUNCTION public.get_all_users()
@@ -61,7 +105,7 @@ END;
 $$;
 
 
--- 3. ADD RLS POLICIES FOR ADMIN UPDATES & DELETIONS
+-- 5. ADD RLS POLICIES FOR ADMIN UPDATES & DELETIONS
 -- Drop existing policies if they exist to avoid conflict
 DROP POLICY IF EXISTS "Admins can update all listings" ON public.listings;
 DROP POLICY IF EXISTS "Admins can delete all listings" ON public.listings;
@@ -121,7 +165,7 @@ WITH CHECK (
 );
 
 
--- 4. FIX NOTIFICATIONS TABLE COLUMNS
+-- 6. FIX NOTIFICATIONS TABLE COLUMNS
 -- Ensure columns required by notification-provider.tsx exist in notifications table
 DO $$ 
 BEGIN
