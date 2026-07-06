@@ -4,15 +4,13 @@ import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { UserCircle, Search, Send, Loader2, ArrowLeft, Building2 } from "lucide-react"
+import { UserCircle, Search, Send, Loader2, ArrowLeft, Building2, Plus, MessageCircle, X } from "lucide-react"
 
 interface Message {
     id: string;
     sender_id: string;
     receiver_id: string;
-    listing_id: string;
+    listing_id: string | null;
     content: string;
     created_at: string;
     sender?: { full_name: string };
@@ -27,7 +25,7 @@ interface Conversation {
         avatar_url: string | null;
     };
     listing: {
-        id: string;
+        id: string | null;
         title: string;
     };
     lastMessage: string;
@@ -42,7 +40,14 @@ export default function MessagesPage() {
     const [sending, setSending] = useState(false)
     const [reply, setReply] = useState("")
     const [currentUser, setCurrentUser] = useState<any>(null)
+    const [searchQuery, setSearchQuery] = useState("")
     const scrollRef = useRef<HTMLDivElement>(null)
+
+    // New Chat States
+    const [showNewChatModal, setShowNewChatModal] = useState(false)
+    const [searchUserQuery, setSearchUserQuery] = useState("")
+    const [userSearchResults, setUserSearchResults] = useState<any[]>([])
+    const [searchingUsers, setSearchingUsers] = useState(false)
 
     useEffect(() => {
         const init = async () => {
@@ -78,7 +83,7 @@ export default function MessagesPage() {
                 const otherPartyName = msg.sender_id === userId ? msg.receiver?.full_name : msg.sender?.full_name
                 const otherPartyAvatar = msg.sender_id === userId ? msg.receiver?.avatar_url : msg.sender?.avatar_url
 
-                const key = `${otherPartyId}-${msg.listing_id}`
+                const key = `${otherPartyId}-${msg.listing_id || 'direct'}`
 
                 if (!grouped[key]) {
                     grouped[key] = {
@@ -89,8 +94,8 @@ export default function MessagesPage() {
                             avatar_url: otherPartyAvatar || null
                         },
                         listing: {
-                            id: msg.listing?.id,
-                            title: msg.listing?.title || "Unknown Property"
+                            id: msg.listing?.id || null,
+                            title: msg.listing?.title || "Direct Message"
                         },
                         lastMessage: msg.content,
                         lastDate: msg.created_at
@@ -106,10 +111,17 @@ export default function MessagesPage() {
     const fetchMessages = async (conv: Conversation) => {
         if (!currentUser) return
 
-        const { data, error } = await supabase
+        let query = supabase
             .from('messages')
             .select('*, sender:profiles!messages_sender_id_fkey(full_name, avatar_url)')
-            .eq('listing_id', conv.listing.id)
+
+        if (conv.listing.id) {
+            query = query.eq('listing_id', conv.listing.id)
+        } else {
+            query = query.is('listing_id', null)
+        }
+
+        const { data, error } = await query
             .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${conv.otherParty.id}),and(sender_id.eq.${conv.otherParty.id},receiver_id.eq.${currentUser.id})`)
             .order('created_at', { ascending: true })
 
@@ -121,14 +133,20 @@ export default function MessagesPage() {
             fetchMessages(selectedConv)
             
             // Subscribe to realtime updates for this conversation
+            let channelConfig: any = { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'messages'
+            };
+            
+            // Filter by listing_id if it's not a direct message
+            if (selectedConv.listing.id) {
+                channelConfig.filter = `listing_id=eq.${selectedConv.listing.id}`;
+            }
+
             const channel = supabase
-                .channel(`messages_channel_${selectedConv.listing.id}`)
-                .on('postgres_changes', { 
-                    event: 'INSERT', 
-                    schema: 'public', 
-                    table: 'messages',
-                    filter: `listing_id=eq.${selectedConv.listing.id}`
-                }, () => {
+                .channel(`messages_channel_${selectedConv.id}`)
+                .on('postgres_changes', channelConfig, () => {
                     fetchMessages(selectedConv)
                 })
                 .subscribe()
@@ -147,11 +165,12 @@ export default function MessagesPage() {
         const { error } = await supabase.from('messages').insert({
             sender_id: currentUser.id,
             receiver_id: selectedConv.otherParty.id,
-            listing_id: selectedConv.listing.id,
+            listing_id: selectedConv.listing.id || null,
             content: reply
         })
 
         if (!error) {
+            const messageSent = reply
             setReply("")
             fetchMessages(selectedConv)
 
@@ -160,13 +179,69 @@ export default function MessagesPage() {
                 user_id: selectedConv.otherParty.id,
                 sender_id: currentUser.id,
                 title: "New Message",
-                message: reply.substring(0, 100),
+                message: messageSent.substring(0, 100),
                 type: 'info',
                 link: '/dashboard/messages'
             })
         }
         setSending(false)
     }
+
+    // Search Users for New Chat
+    const handleSearchUsers = async (query: string) => {
+        setSearchUserQuery(query)
+        if (!query.trim()) {
+            setUserSearchResults([])
+            return
+        }
+
+        setSearchingUsers(true)
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .ilike('full_name', `%${query}%`)
+            .limit(10)
+
+        if (data) {
+            // Exclude current user from results
+            setUserSearchResults(data.filter(u => u.id !== currentUser?.id))
+        }
+        setSearchingUsers(false)
+    }
+
+    const startNewChat = (user: any) => {
+        const convId = `${user.id}-direct`
+        const existingConv = conversations.find(c => c.id === convId)
+
+        if (existingConv) {
+            setSelectedConv(existingConv)
+        } else {
+            const newConv: Conversation = {
+                id: convId,
+                otherParty: {
+                    id: user.id,
+                    name: user.full_name,
+                    avatar_url: user.avatar_url
+                },
+                listing: {
+                    id: null,
+                    title: "Direct Message"
+                },
+                lastMessage: "No messages yet",
+                lastDate: new Date().toISOString()
+            }
+            setConversations(prev => [newConv, ...prev])
+            setSelectedConv(newConv)
+        }
+        setShowNewChatModal(false)
+        setSearchUserQuery("")
+        setUserSearchResults([])
+    }
+
+    const filteredConversations = conversations.filter(conv =>
+        conv.otherParty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        conv.listing.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
 
     if (loading) {
         return (
@@ -177,27 +252,44 @@ export default function MessagesPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-140px)] flex flex-col">
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold tracking-tight text-white">Messages</h1>
-                <p className="text-muted-foreground">Chat with buyers and sellers about properties.</p>
+        <div className="h-[calc(100vh-140px)] flex flex-col relative">
+            <div className="mb-6 flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-white">Messages</h1>
+                    <p className="text-muted-foreground">Chat with buyers and sellers about properties.</p>
+                </div>
             </div>
 
-            <div className="flex-1 flex overflow-hidden border border-white/10 rounded-2xl bg-card shadow-sm">
+            <div className="flex-1 flex overflow-hidden border border-white/10 rounded-2xl bg-card shadow-sm relative">
 
                 {/* Conversations Sidebar */}
                 <div className={`${selectedConv ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-white/10 bg-black/20`}>
-                    <div className="p-4 border-b border-white/10 bg-card">
-                        <div className="relative">
+                    <div className="p-4 border-b border-white/10 bg-card flex gap-2">
+                        <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
-                            <Input placeholder="Search messages..." className="pl-9 bg-white/5 border-none h-10" />
+                            <Input 
+                                placeholder="Search conversations..." 
+                                className="pl-9 bg-white/5 border-none h-10" 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
+                        <Button 
+                            onClick={() => setShowNewChatModal(true)} 
+                            className="bg-[#ff385c] hover:bg-[#d9324e] h-10 w-10 p-0 rounded-xl shrink-0"
+                            title="New Message"
+                        >
+                            <Plus className="h-5 w-5" />
+                        </Button>
                     </div>
+                    
                     <div className="flex-1 overflow-y-auto">
-                        {conversations.length === 0 ? (
-                            <div className="p-8 text-center text-sm text-gray-400">No conversations yet.</div>
+                        {filteredConversations.length === 0 ? (
+                            <div className="p-8 text-center text-sm text-gray-400">
+                                {searchQuery ? "No matches found." : "No conversations yet."}
+                            </div>
                         ) : (
-                            conversations.map((conv) => (
+                            filteredConversations.map((conv) => (
                                 <div
                                     key={conv.id}
                                     onClick={() => setSelectedConv(conv)}
@@ -256,23 +348,29 @@ export default function MessagesPage() {
 
                             {/* Messages Area */}
                             <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-black/20">
-                                {messages.map((msg) => {
-                                    const isMe = msg.sender_id === currentUser?.id
-                                    return (
-                                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[70%] rounded-2xl p-3 text-sm ${isMe
-                                                    ? 'bg-[#ff385c] text-white rounded-tr-none'
-                                                    : 'bg-white/5 border border-white/10 text-white rounded-tl-none shadow-sm'
-                                                }`}>
-                                                {!isMe && <p className="text-[10px] font-bold opacity-60 mb-1 capitalize text-neutral-400">{msg.sender?.full_name}</p>}
-                                                <p className="leading-relaxed">{msg.content}</p>
-                                                <p className={`text-[9px] mt-1 ${isMe ? 'text-white/70 text-right' : 'text-neutral-500'}`}>
-                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </p>
+                                {messages.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center text-neutral-500 text-sm italic">
+                                        No messages in this chat yet. Start the conversation!
+                                    </div>
+                                ) : (
+                                    messages.map((msg) => {
+                                        const isMe = msg.sender_id === currentUser?.id
+                                        return (
+                                            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`max-w-[70%] rounded-2xl p-3 text-sm ${isMe
+                                                        ? 'bg-[#ff385c] text-white rounded-tr-none'
+                                                        : 'bg-white/5 border border-white/10 text-white rounded-tl-none shadow-sm'
+                                                    }`}>
+                                                    {!isMe && <p className="text-[10px] font-bold opacity-60 mb-1 capitalize text-neutral-400">{msg.sender?.full_name}</p>}
+                                                    <p className="leading-relaxed">{msg.content}</p>
+                                                    <p className={`text-[9px] mt-1 ${isMe ? 'text-white/70 text-right' : 'text-neutral-500'}`}>
+                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    )
-                                })}
+                                        )
+                                    })
+                                )}
                             </div>
 
                             {/* Reply Area */}
@@ -293,7 +391,7 @@ export default function MessagesPage() {
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-center p-10 bg-black/40">
                             <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                                <MessageCircleIcon className="h-10 w-10 text-neutral-600" />
+                                <MessageCircle className="h-10 w-10 text-neutral-600 animate-pulse" />
                             </div>
                             <h3 className="text-lg font-bold text-white">Your Inbox</h3>
                             <p className="text-neutral-500 max-w-xs mt-2 text-sm">
@@ -303,25 +401,69 @@ export default function MessagesPage() {
                     )}
                 </div>
             </div>
-        </div>
-    )
-}
 
-function MessageCircleIcon(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-        </svg>
+            {/* New Chat Modal Overlay */}
+            {showNewChatModal && (
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[999] flex items-center justify-center p-4">
+                    <div className="bg-neutral-900 border border-white/10 w-full max-w-md rounded-3xl p-6 relative shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button 
+                            onClick={() => {
+                                setShowNewChatModal(false)
+                                setSearchUserQuery("")
+                                setUserSearchResults([])
+                            }}
+                            className="absolute top-4 right-4 p-2 text-neutral-500 hover:text-white rounded-full bg-white/5 transition-all"
+                        >
+                            <X size={16} />
+                        </button>
+                        
+                        <h3 className="text-xl font-black text-white uppercase tracking-tight mb-4">New Message</h3>
+                        
+                        <div className="relative mb-6">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+                            <Input 
+                                placeholder="Search users by name..." 
+                                className="pl-9 bg-white/5 border-none h-12 focus-visible:ring-[#ff385c]" 
+                                value={searchUserQuery}
+                                onChange={(e) => handleSearchUsers(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="max-h-[300px] overflow-y-auto space-y-2">
+                            {searchingUsers ? (
+                                <div className="flex items-center justify-center py-6 text-neutral-400 gap-2">
+                                    <Loader2 className="animate-spin text-[#ff385c] h-4 w-4" />
+                                    Searching...
+                                </div>
+                            ) : userSearchResults.length === 0 ? (
+                                <div className="text-center py-8 text-neutral-500 text-sm">
+                                    {searchUserQuery.trim() ? "No users found matching query." : "Type a name to search for registered users."}
+                                </div>
+                            ) : (
+                                userSearchResults.map(user => (
+                                    <div 
+                                        key={user.id}
+                                        onClick={() => startNewChat(user)}
+                                        className="flex items-center gap-3 p-3 rounded-2xl hover:bg-white/5 cursor-pointer border border-transparent hover:border-white/5 transition-all"
+                                    >
+                                        <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden flex items-center justify-center bg-neutral-800 shrink-0">
+                                            {user.avatar_url ? (
+                                                <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <UserCircle className="text-neutral-500 w-full h-full" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-white text-sm truncate">{user.full_name}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     )
 }

@@ -280,7 +280,7 @@ export default function AdminPage() {
         const { error } = await supabase.rpc('set_user_role', {
             target_user_id: userId,
             new_role: role,
-            security_code: securityCode || null
+            security_code: securityCode || adminConfirmCode || null
         })
         if (error) {
             showToast('error', "Failed to update role: " + error.message)
