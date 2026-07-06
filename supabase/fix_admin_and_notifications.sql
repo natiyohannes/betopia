@@ -208,3 +208,9 @@ CREATE POLICY "notifications_insert" ON public.notifications FOR INSERT WITH CHE
 
 DROP POLICY IF EXISTS "notifications_update" ON public.notifications;
 CREATE POLICY "notifications_update" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+
+
+-- 7. ASSIGN THE "UNKNOWN OWNER" LISTING TO betopia.et@gmail.com
+UPDATE public.listings 
+SET user_id = (SELECT id FROM public.profiles WHERE id = (SELECT id FROM auth.users WHERE email = 'betopia.et@gmail.com'))
+WHERE title = '76543jjn';
