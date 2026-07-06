@@ -705,7 +705,7 @@ export default function AdminPage() {
                                     {view === 'pending_payments' ? 'Pending Payments' : 'Global Listings'}
                                 </h2>
                                 <span className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[10px] font-black text-neutral-500 uppercase tracking-widest">
-                                    {view === 'pending_payments' ? allListings.filter(l => l.status === 'pending_payment').length : allListings.length} total properties
+                                    {view === 'pending_payments' ? allListings.filter(l => l.status === 'pending_payment').length : allListings.filter(l => l.status !== 'rejected').length} total properties
                                 </span>
                              </div>
                              <button 
@@ -738,7 +738,7 @@ export default function AdminPage() {
                             </div>
                         ) : (
                             <div className="grid gap-4">
-                                {(view === 'pending_payments' ? allListings.filter(l => l.status === 'pending_payment') : allListings).map((listing: any) => {
+                                {(view === 'pending_payments' ? allListings.filter(l => l.status === 'pending_payment') : allListings.filter(l => l.status !== 'rejected')).map((listing: any) => {
                                     const payment = listing.payments ? (Array.isArray(listing.payments) ? listing.payments[0] : listing.payments) : null;
                                     return (
                                         <div key={listing.id} className="group bg-neutral-950 border border-white/10 rounded-3xl p-5 flex flex-col md:flex-row items-center gap-6 hover:border-white/20 transition-all">
@@ -879,7 +879,7 @@ export default function AdminPage() {
                         {loading ? (
                             <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#ff385c]" size={36} /></div>
                         ) : (
-                            <div className="bg-neutral-950 border border-white/10 rounded-[32px] overflow-hidden overflow-x-auto">
+                            <div className="bg-neutral-950 border border-white/10 rounded-[32px] overflow-x-auto">
                                 <div>
                                 {/* Table header */}
                                 <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-600">
