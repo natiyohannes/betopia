@@ -414,10 +414,7 @@ export default function OwnerPage() {
                                                 className="flex items-center justify-between p-3 bg-white/3 hover:bg-white/5 rounded-xl cursor-pointer transition-all group">
                                                 <div className="flex items-center gap-3">
                                                     <Activity size={16} className="text-amber-400 group-hover:scale-110 transition-transform" />
-                                                    <div className="text-left">
-                                                        <span className="text-neutral-300 font-medium text-sm">Daily Visitors</span>
-                                                        <span className="text-[9px] text-neutral-500 uppercase tracking-widest font-black block group-hover:text-amber-400 transition-colors">Click to view monthly chart</span>
-                                                    </div>
+                                                    <span className="text-neutral-300 font-medium text-sm">Daily Visitors</span>
                                                 </div>
                                                 <span className="text-white font-black text-lg">+{stats.visitorsToday}</span>
                                             </div>
@@ -795,12 +792,7 @@ export default function OwnerPage() {
                                 </svg>
                             </div>
 
-                            <div className="flex gap-3 pt-2">
-                                <button onClick={() => setShowVisitsModal(false)}
-                                    className="w-full h-12 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold rounded-xl transition-all">
-                                    Close Chart
-                                </button>
-                            </div>
+
                         </div>
                     </div>
                 );
