@@ -15,6 +15,7 @@ export default function SettingsPage() {
     const [updating, setUpdating] = useState(false)
     const [user, setUser] = useState<any>(null)
     const [isAdmin, setIsAdmin] = useState(false)
+    const [isOwner, setIsOwner] = useState(false)
     const [stats, setStats] = useState({ listings: 0, saved: 0 })
     const [profile, setProfile] = useState<any>({ full_name: '', phone_number: '', role: 'user', subscription_status: 'inactive' })
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -23,7 +24,9 @@ export default function SettingsPage() {
         const getProfileData = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
-                setIsAdmin(user.email === SUPER_ADMIN_EMAIL)
+                const isSuperAdmin = user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()
+                setIsOwner(isSuperAdmin)
+                setIsAdmin(isSuperAdmin)
                 setUser(user)
                 
                 // Fetch Profile
@@ -107,20 +110,24 @@ export default function SettingsPage() {
                             {profile.full_name || 'Your Profile'}
                         </h1>
                         <div className="flex items-center gap-3 mt-2">
-                             <span className="bg-[#ff385c]/20 text-[#ff385c] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-[#ff385c]/20">
-                                {isAdmin ? 'Admin' : (profile.role || 'User')}
-                             </span>
-                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
-                                isAdmin || profile.subscription_status === 'active' ? 'bg-green-500/20 text-green-500 border border-green-500/20' : 'bg-neutral-800 text-neutral-400 border border-white/5'
+                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                isOwner ? 'bg-[#ff385c]/20 text-[#ff385c] border-[#ff385c]/20' : isAdmin ? 'bg-[#ff385c]/20 text-[#ff385c] border-[#ff385c]/20' : 'bg-white/5 text-neutral-500 border-white/10'
                              }`}>
-                                {isAdmin ? (
-                                    <> <Crown size={12} /> Admin Account</>
-                                ) : profile.subscription_status === 'active' ? (
-                                    <> <CheckCircle2 size={12} /> PRO Member</>
-                                ) : (
-                                    'Free Account'
-                                )}
+                                {isOwner ? 'Owner' : isAdmin ? 'Admin' : (profile.role || 'User')}
                              </span>
+                             {!isOwner && (
+                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
+                                    isAdmin || profile.subscription_status === 'active' ? 'bg-green-500/20 text-green-500 border border-green-500/20' : 'bg-neutral-800 text-neutral-400 border border-white/5'
+                                 }`}>
+                                    {isAdmin ? (
+                                        <> <Crown size={12} /> Admin Account</>
+                                    ) : profile.subscription_status === 'active' ? (
+                                        <> <CheckCircle2 size={12} /> PRO Member</>
+                                    ) : (
+                                        'Free Account'
+                                    )}
+                                 </span>
+                             )}
                         </div>
                     </div>
                 </div>

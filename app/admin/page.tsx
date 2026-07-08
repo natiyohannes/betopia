@@ -914,7 +914,9 @@ export default function AdminPage() {
                                             {/* User Info */}
                                             <div className="w-full md:w-auto md:col-span-4 flex items-center justify-between md:justify-start gap-3 min-w-0">
                                                 <div className="w-10 h-10 rounded-2xl bg-neutral-900 border border-white/10 flex items-center justify-center shrink-0">
-                                                    {user.role === 'admin'
+                                                    {user.email === SUPER_ADMIN_EMAIL
+                                                        ? <Crown size={18} className="text-amber-500" />
+                                                        : user.role === 'admin'
                                                         ? <Crown size={18} className="text-[#ff385c]" />
                                                         : <User size={18} className="text-neutral-600" />
                                                     }
@@ -944,13 +946,15 @@ export default function AdminPage() {
                                             {/* Role Badge */}
                                             <div className="w-full md:w-auto flex justify-between md:justify-center md:col-span-2 items-center"><span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-neutral-600">Role</span>
                                                 <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
-                                                    user.role === 'admin'
+                                                    user.email === SUPER_ADMIN_EMAIL
+                                                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                                        : user.role === 'admin'
                                                         ? 'bg-[#ff385c]/10 text-[#ff385c] border-[#ff385c]/20'
                                                         : user.role === 'agent'
                                                         ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                                                         : 'bg-white/5 text-neutral-500 border-white/10'
                                                 }`}>
-                                                    {user.role}
+                                                    {user.email === SUPER_ADMIN_EMAIL ? 'owner' : user.role}
                                                 </span>
                                             </div>
 
@@ -967,7 +971,7 @@ export default function AdminPage() {
                                                                 >
                                                                     <Eye size={16} />
                                                                 </button>
-                                                                {user.role !== 'admin' && (
+                                                                {user.role !== 'admin' && user.email !== SUPER_ADMIN_EMAIL && (
                                                                     <button
                                                                         onClick={() => handleRoleAction(user, 'admin')}
                                                                         className="p-2 rounded-xl border border-[#ff385c]/20 bg-[#ff385c]/10 hover:bg-[#ff385c]/20 text-[#ff385c] hover:text-white transition-all flex items-center gap-2"
@@ -976,12 +980,14 @@ export default function AdminPage() {
                                                                         <Shield size={16} />
                                                                     </button>
                                                                 )}
-                                                        <button
-                                                            onClick={() => setActionMenu(actionMenu === user.id ? null : user.id)}
-                                                            className="p-2 rounded-xl border border-white/10 hover:bg-white/10 text-neutral-400 hover:text-white transition-all"
-                                                        >
-                                                            <MoreVertical size={16} />
-                                                        </button>
+                                                        {user.email !== SUPER_ADMIN_EMAIL && (
+                                                            <button
+                                                                onClick={() => setActionMenu(actionMenu === user.id ? null : user.id)}
+                                                                className="p-2 rounded-xl border border-white/10 hover:bg-white/10 text-neutral-400 hover:text-white transition-all"
+                                                            >
+                                                                <MoreVertical size={16} />
+                                                            </button>
+                                                        )}
                                                     </>
                                                 )}
                                                 {actionMenu === user.id && (

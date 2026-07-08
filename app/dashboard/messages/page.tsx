@@ -198,8 +198,8 @@ export default function MessagesPage() {
         setSearchingUsers(true)
         const { data, error } = await supabase
             .from('profiles')
-            .select('id, full_name, avatar_url')
-            .ilike('full_name', `%${query}%`)
+            .select('id, full_name, avatar_url, phone_number')
+            .or(`full_name.ilike.%${query}%,phone_number.ilike.%${query}%`)
             .limit(10)
 
         if (data) {
@@ -220,7 +220,7 @@ export default function MessagesPage() {
                 id: convId,
                 otherParty: {
                     id: user.id,
-                    name: user.full_name,
+                    name: user.full_name || user.phone_number || "Unknown User",
                     avatar_url: user.avatar_url
                 },
                 listing: {
@@ -455,7 +455,7 @@ export default function MessagesPage() {
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-white text-sm truncate">{user.full_name}</p>
+                                            <p className="font-bold text-white text-sm truncate">{user.full_name || user.phone_number || "Unknown User"}</p>
                                         </div>
                                     </div>
                                 ))
