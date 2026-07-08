@@ -140,7 +140,7 @@ export default function OwnerPage() {
                 totalRevenue,
                 newUsersToday: newUsersRes.count ?? 0,
                 newListingsToday: newListingsRes.count ?? 0,
-                visitorsToday: (publishedRes.count ?? 0) * 7 + (usersRes.count ?? 0) * 3 + 24
+                visitorsToday: 0
             })
         } catch (err) {
             showToast('error', 'Failed to load platform stats')
@@ -679,7 +679,7 @@ export default function OwnerPage() {
             {/* ── MONTHLY VISITS CHART MODAL ── */}
             {showVisitsModal && (() => {
                 // Generate monthly visits data based on stats or reasonable mocks
-                const dailyBase = stats?.visitorsToday || 120;
+                const dailyBase = stats?.visitorsToday ?? 0;
                 const monthlyVisits = Array.from({ length: 30 }, (_, i) => {
                     const factor = 1 + Math.sin(i * 0.4) * 0.15 + (i % 5 === 0 ? 0.1 : -0.05) + (i % 7 === 0 ? -0.15 : 0.05);
                     return {
