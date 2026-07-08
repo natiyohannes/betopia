@@ -7,7 +7,8 @@ import {
     Shield, Crown, Users, Home, BarChart3, MessageSquare,
     DollarSign, Lock, Eye, EyeOff, Loader2, CheckCircle2,
     AlertTriangle, TrendingUp, Activity, Bell, Settings,
-    LogOut, ArrowLeft, Zap, Database, Globe, RefreshCw, X
+    LogOut, ArrowLeft, Zap, Database, Globe, RefreshCw, X,
+    Clock, CreditCard, User, FileText
 } from "lucide-react"
 
 const OWNER_EMAIL = "betopia.et@gmail.com"
@@ -42,7 +43,9 @@ export default function OwnerPage() {
     const [loadingStats, setLoadingStats] = useState(false)
     const [toast, setToast] = useState<{ type: 'success' | 'error', msg: string } | null>(null)
     const [broadcastMsg, setBroadcastMsg] = useState("")
-    const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'platform'>('overview')
+    const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'payments' | 'platform'>('overview')
+    const [pendingPayments, setPendingPayments] = useState<any[]>([])
+    const [loadingPayments, setLoadingPayments] = useState(false)
 
     const showToast = (type: 'success' | 'error', msg: string) => {
         setToast({ type, msg })
@@ -73,11 +76,29 @@ export default function OwnerPage() {
         if (password === OWNER_PASSWORD) {
             setAuthStep('ready')
             loadStats()
+            loadPendingPayments()
         } else {
             setPasswordError("Incorrect password. Access denied.")
         }
         setPasswordLoading(false)
     }
+
+    const loadPendingPayments = useCallback(async () => {
+        setLoadingPayments(true)
+        const { data, error } = await supabase
+            .from('payments')
+            .select(`
+                id, amount, status, provider, transaction_id, created_at,
+                profiles:user_id ( id, full_name, phone_number ),
+                listings:listing_id ( id, title, property_type )
+            `)
+            .order('created_at', { ascending: false })
+
+        if (!error && data) {
+            setPendingPayments(data)
+        }
+        setLoadingPayments(false)
+    }, [])
 
     const loadStats = useCallback(async () => {
         setLoadingStats(true)
@@ -313,14 +334,18 @@ export default function OwnerPage() {
                 </div>
 
                 {/* Tab Nav */}
-                <div className="flex gap-2 bg-neutral-900 border border-white/5 p-1.5 rounded-2xl w-fit">
+                <div className="flex gap-2 bg-neutral-900 border border-white/5 p-1.5 rounded-2xl w-fit flex-wrap">
                     {[
                         { key: 'overview', icon: BarChart3, label: 'Overview' },
                         { key: 'financials', icon: DollarSign, label: 'Financials' },
+                        { key: 'payments', icon: CreditCard, label: 'Pending Payments' },
                         { key: 'platform', icon: Settings, label: 'Platform Tools' },
                     ].map(tab => (
                         <button key={tab.key}
-                            onClick={() => setActiveTab(tab.key as any)}
+                            onClick={() => {
+                                setActiveTab(tab.key as any)
+                                if (tab.key === 'payments') loadPendingPayments()
+                            }}
                             className={`h-10 px-5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${
                                 activeTab === tab.key
                                     ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
@@ -445,6 +470,108 @@ export default function OwnerPage() {
                             </>
                         ) : (
                             <div className="text-center py-20 text-neutral-500">No financial data available.</div>
+                        )}
+                    </div>
+                )}
+
+                {/* ── PENDING PAYMENTS TAB ── */}
+                {activeTab === 'payments' && (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tight">All Payments</h2>
+                                <p className="text-neutral-500 text-sm mt-1">Every payment submitted on the platform</p>
+                            </div>
+                            <button onClick={loadPendingPayments} disabled={loadingPayments}
+                                className="h-10 px-4 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2 text-neutral-300 text-sm font-bold hover:bg-white/10 transition-all">
+                                <RefreshCw size={14} className={loadingPayments ? 'animate-spin text-amber-400' : ''} /> Refresh
+                            </button>
+                        </div>
+
+                        {loadingPayments ? (
+                            <div className="flex items-center justify-center py-20">
+                                <Loader2 className="animate-spin text-amber-400" size={36} />
+                            </div>
+                        ) : pendingPayments.length === 0 ? (
+                            <div className="bg-neutral-900 border border-white/5 rounded-[28px] p-16 text-center">
+                                <CreditCard size={40} className="text-neutral-600 mx-auto mb-4" />
+                                <p className="text-neutral-500 font-medium">No payments found</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {/* Summary bar */}
+                                <div className="grid grid-cols-3 gap-4 mb-6">
+                                    {[
+                                        { label: 'Total', value: pendingPayments.length, color: 'text-white', bg: 'bg-white/5 border-white/10' },
+                                        { label: 'Pending', value: pendingPayments.filter((p:any) => p.status === 'pending').length, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+                                        { label: 'Completed', value: pendingPayments.filter((p:any) => p.status === 'completed').length, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
+                                    ].map(s => (
+                                        <div key={s.label} className={`border ${s.bg} rounded-2xl p-4 text-center`}>
+                                            <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+                                            <div className="text-neutral-500 text-xs font-bold uppercase tracking-widest mt-1">{s.label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Payments list */}
+                                {pendingPayments.map((payment: any) => {
+                                    const isPending = payment.status === 'pending'
+                                    const isCompleted = payment.status === 'completed'
+                                    const isFailed = payment.status === 'failed'
+                                    return (
+                                        <div key={payment.id}
+                                            className="bg-neutral-900 border border-white/5 rounded-[20px] p-5 flex flex-col md:flex-row md:items-center gap-4 hover:border-white/10 transition-all">
+                                            {/* Status icon */}
+                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                                                isCompleted ? 'bg-green-500/10 border border-green-500/20' :
+                                                isPending ? 'bg-amber-500/10 border border-amber-500/20' :
+                                                'bg-red-500/10 border border-red-500/20'
+                                            }`}>
+                                                {isCompleted ? <CheckCircle2 size={18} className="text-green-400" /> :
+                                                 isPending ? <Clock size={18} className="text-amber-400" /> :
+                                                 <AlertTriangle size={18} className="text-red-400" />}
+                                            </div>
+
+                                            {/* User info */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-white font-bold text-sm truncate">
+                                                        {payment.profiles?.full_name || payment.profiles?.phone_number || 'Unknown User'}
+                                                    </span>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                                                        isCompleted ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                        isPending ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                        'bg-red-500/10 text-red-400 border-red-500/20'
+                                                    }`}>{payment.status}</span>
+                                                </div>
+                                                <div className="text-neutral-500 text-xs mt-1 flex items-center gap-3 flex-wrap">
+                                                    {payment.listings?.title && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Home size={11} /> {payment.listings.title}
+                                                        </span>
+                                                    )}
+                                                    <span className="flex items-center gap-1">
+                                                        <CreditCard size={11} /> {payment.provider || 'Unknown provider'}
+                                                    </span>
+                                                    {payment.transaction_id && (
+                                                        <span className="flex items-center gap-1">
+                                                            <FileText size={11} /> {payment.transaction_id}
+                                                        </span>
+                                                    )}
+                                                    <span>{new Date(payment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Amount */}
+                                            <div className="text-right shrink-0">
+                                                <div className={`text-xl font-black ${isCompleted ? 'text-green-400' : isPending ? 'text-amber-400' : 'text-red-400'}`}>
+                                                    ETB {Number(payment.amount || 0).toLocaleString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         )}
                     </div>
                 )}
