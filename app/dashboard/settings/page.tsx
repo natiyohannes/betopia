@@ -41,15 +41,15 @@ export default function SettingsPage() {
                     if (profileData.role === 'admin') setIsAdmin(true)
                 }
 
-                // Fetch Stats
+                // Fetch Stats accurately
                 const [listingsRes, savedRes] = await Promise.all([
-                    supabase.from('listings').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-                    supabase.from('saved_listings').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+                    supabase.from('listings').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+                    supabase.from('saved_listings').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
                 ])
 
                 setStats({
-                    listings: listingsRes.count || 0,
-                    saved: savedRes.count || 0
+                    listings: listingsRes.count ?? 0,
+                    saved: savedRes.count ?? 0
                 })
             }
             setLoading(false)
@@ -231,6 +231,14 @@ export default function SettingsPage() {
                                     <a href="/admin">
                                         <Crown size={20} />
                                         Admin Panel
+                                    </a>
+                                </Button>
+                            )}
+                            {isOwner && (
+                                <Button asChild className="w-full h-14 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 rounded-2xl justify-start gap-4 text-amber-400 font-black px-6">
+                                    <a href="/owner">
+                                        <Shield size={20} />
+                                        Owner Panel
                                     </a>
                                 </Button>
                             )}
