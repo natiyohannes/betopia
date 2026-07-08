@@ -27,11 +27,12 @@ export default function DashboardPage() {
                 return
             }
 
-            // Fetch Listings
+            // Fetch Listings — strictly only this user's own listings
             const { data: listings } = await supabase
                 .from('listings')
-                .select('id, status, views_count, created_at, title')
+                .select('id, status, views_count, created_at, title, user_id')
                 .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
 
             // Fetch Profile
             const { data: profile } = await supabase
