@@ -411,15 +411,15 @@ export default function OwnerPage() {
                                                 <span className="text-white font-black text-lg">+{stats.newListingsToday}</span>
                                             </div>
                                             <div onClick={() => setShowVisitsModal(true)}
-                                                className="flex items-center justify-between p-3 bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/10 rounded-xl cursor-pointer transition-all group">
+                                                className="flex items-center justify-between p-3 bg-white/3 hover:bg-white/5 rounded-xl cursor-pointer transition-all group">
                                                 <div className="flex items-center gap-3">
                                                     <Activity size={16} className="text-amber-400 group-hover:scale-110 transition-transform" />
                                                     <div className="text-left">
-                                                        <span className="text-neutral-300 font-medium text-sm block">Daily Visitors</span>
-                                                        <span className="text-[9px] text-amber-400/50 uppercase tracking-widest font-black block group-hover:text-amber-400 transition-colors">Click to view monthly chart</span>
+                                                        <span className="text-neutral-300 font-medium text-sm">Daily Visitors</span>
+                                                        <span className="text-[9px] text-neutral-500 uppercase tracking-widest font-black block group-hover:text-amber-400 transition-colors">Click to view monthly chart</span>
                                                     </div>
                                                 </div>
-                                                <span className="text-amber-400 font-black text-lg">+{stats.visitorsToday}</span>
+                                                <span className="text-white font-black text-lg">+{stats.visitorsToday}</span>
                                             </div>
                                         </div>
                                     </div>
