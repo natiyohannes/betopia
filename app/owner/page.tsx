@@ -54,6 +54,8 @@ export default function OwnerPage() {
     const [showListingsModal, setShowListingsModal] = useState(false)
     const [listingsList, setListingsList] = useState<any[]>([])
     const [loadingListingsList, setLoadingListingsList] = useState(false)
+    const [monthlyVisitsData, setMonthlyVisitsData] = useState<{ day: number; date: string; count: number }[]>([])
+    const [loadingMonthlyVisits, setLoadingMonthlyVisits] = useState(false)
 
     const showToast = (type: 'success' | 'error', msg: string) => {
         setToast({ type, msg })
@@ -132,6 +134,29 @@ export default function OwnerPage() {
         setLoadingListingsList(false)
     }, [])
 
+    const loadMonthlyVisits = useCallback(async () => {
+        setLoadingMonthlyVisits(true)
+        // Calculate date 30 days ago
+        const from = new Date()
+        from.setDate(from.getDate() - 29)
+        const fromISO = from.toISOString().split('T')[0]
+
+        const { data, error } = await supabase
+            .from('daily_stats')
+            .select('date, visitor_count')
+            .gte('date', fromISO)
+            .order('date', { ascending: true })
+
+        if (!error && data) {
+            setMonthlyVisitsData(data.map((r: any, i: number) => ({
+                day: i + 1,
+                date: r.date,
+                count: r.visitor_count ?? 0
+            })))
+        }
+        setLoadingMonthlyVisits(false)
+    }, [])
+
     const loadStats = useCallback(async () => {
         setLoadingStats(true)
         try {
@@ -156,9 +181,14 @@ export default function OwnerPage() {
                 supabase.from('listings').select('*', { count: 'exact', head: true }).gte('created_at', todayISO),
             ])
 
-            // Query actual views count across all listings to calculate visitors today
-            const { data: allListingsViews } = await supabase.from('listings').select('views_count')
-            const totalViews = allListingsViews?.reduce((sum: number, l: any) => sum + (l.views_count || 0), 0) || 0
+            // Query daily_stats table for today's real visitor count (tracked per unique session)
+            const todayDate = today.toISOString().split('T')[0]
+            const { data: dailyStatsData } = await supabase
+                .from('daily_stats')
+                .select('visitor_count')
+                .eq('date', todayDate)
+                .single()
+            const visitorsToday = dailyStatsData?.visitor_count ?? 0
 
             const totalRevenue = (completedPayRes.data || []).reduce((sum: number, p: any) => sum + (p.amount || 0), 0)
 
@@ -174,7 +204,7 @@ export default function OwnerPage() {
                 totalRevenue,
                 newUsersToday: newUsersRes.count ?? 0,
                 newListingsToday: newListingsRes.count ?? 0,
-                visitorsToday: totalViews
+                visitorsToday
             })
         } catch (err) {
             showToast('error', 'Failed to load platform stats')
@@ -472,7 +502,7 @@ export default function OwnerPage() {
                                                 </div>
                                                 <span className="text-white font-black text-lg">+{stats.newListingsToday}</span>
                                             </div>
-                                            <div onClick={() => setShowVisitsModal(true)}
+                                            <div onClick={() => { setShowVisitsModal(true); loadMonthlyVisits(); }}
                                                 className="flex items-center justify-between p-3 bg-white/3 hover:bg-white/5 rounded-xl cursor-pointer transition-all group">
                                                 <div className="flex items-center gap-3">
                                                     <Activity size={16} className="text-amber-400 group-hover:scale-110 transition-transform" />
@@ -740,17 +770,17 @@ export default function OwnerPage() {
 
             {/* ── MONTHLY VISITS CHART MODAL ── */}
             {showVisitsModal && (() => {
-                // Generate monthly visits data based on stats or reasonable mocks
-                const dailyBase = stats?.visitorsToday ?? 0;
-                const monthlyVisits = Array.from({ length: 30 }, (_, i) => {
-                    const factor = 1 + Math.sin(i * 0.4) * 0.15 + (i % 5 === 0 ? 0.1 : -0.05) + (i % 7 === 0 ? -0.15 : 0.05);
-                    return {
-                        day: i + 1,
-                        count: Math.round(dailyBase * factor)
-                    };
+                // Build 30-day date range for x-axis slots
+                const today30 = new Date();
+                const slots = Array.from({ length: 30 }, (_, i) => {
+                    const d = new Date(today30);
+                    d.setDate(d.getDate() - (29 - i));
+                    const iso = d.toISOString().split('T')[0];
+                    const found = monthlyVisitsData.find(r => r.date === iso);
+                    return { day: i + 1, date: iso, count: found?.count ?? 0 };
                 });
 
-                const maxVal = Math.max(...monthlyVisits.map(d => d.count)) + 20;
+                const maxVal = Math.max(...slots.map(d => d.count), 1) + 5;
                 const chartHeight = 220;
                 const chartWidth = 500;
                 const paddingLeft = 40;
@@ -759,8 +789,8 @@ export default function OwnerPage() {
                 const paddingBottom = 30;
 
                 // Map monthly data to coordinates
-                const points = monthlyVisits.map((d, index) => {
-                    const x = paddingLeft + (index / (monthlyVisits.length - 1)) * (chartWidth - paddingLeft - paddingRight);
+                const points = slots.map((d, index) => {
+                    const x = paddingLeft + (index / (slots.length - 1)) * (chartWidth - paddingLeft - paddingRight);
                     const y = chartHeight - paddingBottom - (d.count / maxVal) * (chartHeight - paddingTop - paddingBottom);
                     return { x, y, day: d.day, count: d.count };
                 });
@@ -768,7 +798,7 @@ export default function OwnerPage() {
                 const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
                 const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartHeight - paddingBottom} L ${points[0].x} ${chartHeight - paddingBottom} Z`;
                 
-                const totalVisits = monthlyVisits.reduce((sum, d) => sum + d.count, 0);
+                const totalVisits = slots.reduce((sum, d) => sum + d.count, 0);
                 const avgVisits = Math.round(totalVisits / 30);
 
                 return (
@@ -784,11 +814,17 @@ export default function OwnerPage() {
 
                             {/* Title info */}
                             <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                    <Activity className="text-amber-400" size={20} />
-                                    <h2 className="text-xl font-black text-white uppercase tracking-wider">Monthly Visitor Traffic</h2>
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <Activity className="text-amber-400" size={20} />
+                                        <h2 className="text-xl font-black text-white uppercase tracking-wider">Monthly Visitor Traffic</h2>
+                                    </div>
+                                    <button onClick={loadMonthlyVisits} disabled={loadingMonthlyVisits}
+                                        className="h-8 px-3 bg-white/5 hover:bg-white/10 text-xs font-bold text-neutral-300 rounded-lg flex items-center gap-2 border border-white/5 transition-all shrink-0">
+                                        <RefreshCw size={11} className={loadingMonthlyVisits ? 'animate-spin' : ''} /> Refresh
+                                    </button>
                                 </div>
-                                <p className="text-neutral-500 text-sm">Visualizing user activity over the last 30 days</p>
+                                <p className="text-neutral-500 text-sm">Real unique session visits over the last 30 days</p>
                             </div>
 
                             {/* Headline stats */}

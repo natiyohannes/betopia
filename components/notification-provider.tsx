@@ -64,7 +64,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 fetchNotifications(user.id)
             }
         }
+        const trackVisitor = async () => {
+            if (typeof window !== 'undefined' && !sessionStorage.getItem('visitor_tracked')) {
+                await supabase.rpc('increment_daily_visitors')
+                sessionStorage.setItem('visitor_tracked', 'true')
+            }
+        }
         init()
+        trackVisitor()
     }, [])
 
     useEffect(() => {
