@@ -48,6 +48,12 @@ export default function OwnerPage() {
     const [pendingPayments, setPendingPayments] = useState<any[]>([])
     const [loadingPayments, setLoadingPayments] = useState(false)
     const [showVisitsModal, setShowVisitsModal] = useState(false)
+    const [showUsersModal, setShowUsersModal] = useState(false)
+    const [usersList, setUsersList] = useState<any[]>([])
+    const [loadingUsersList, setLoadingUsersList] = useState(false)
+    const [showListingsModal, setShowListingsModal] = useState(false)
+    const [listingsList, setListingsList] = useState<any[]>([])
+    const [loadingListingsList, setLoadingListingsList] = useState(false)
 
     const showToast = (type: 'success' | 'error', msg: string) => {
         setToast({ type, msg })
@@ -102,6 +108,30 @@ export default function OwnerPage() {
         setLoadingPayments(false)
     }, [])
 
+    const loadAllUsersList = useCallback(async () => {
+        setLoadingUsersList(true)
+        const { data, error } = await supabase.rpc('get_all_users')
+        if (!error && data) {
+            setUsersList(data)
+        }
+        setLoadingUsersList(false)
+    }, [])
+
+    const loadAllListingsList = useCallback(async () => {
+        setLoadingListingsList(true)
+        const { data, error } = await supabase
+            .from('listings')
+            .select(`
+                id, title, status, price, created_at, property_type, user_id,
+                profiles:user_id ( full_name, phone_number )
+            `)
+            .order('created_at', { ascending: false })
+        if (!error && data) {
+            setListingsList(data)
+        }
+        setLoadingListingsList(false)
+    }, [])
+
     const loadStats = useCallback(async () => {
         setLoadingStats(true)
         try {
@@ -126,6 +156,10 @@ export default function OwnerPage() {
                 supabase.from('listings').select('*', { count: 'exact', head: true }).gte('created_at', todayISO),
             ])
 
+            // Query actual views count across all listings to calculate visitors today
+            const { data: allListingsViews } = await supabase.from('listings').select('views_count')
+            const totalViews = allListingsViews?.reduce((sum: number, l: any) => sum + (l.views_count || 0), 0) || 0
+
             const totalRevenue = (completedPayRes.data || []).reduce((sum: number, p: any) => sum + (p.amount || 0), 0)
 
             setStats({
@@ -140,13 +174,29 @@ export default function OwnerPage() {
                 totalRevenue,
                 newUsersToday: newUsersRes.count ?? 0,
                 newListingsToday: newListingsRes.count ?? 0,
-                visitorsToday: 0
+                visitorsToday: totalViews
             })
         } catch (err) {
             showToast('error', 'Failed to load platform stats')
         }
         setLoadingStats(false)
     }, [])
+
+    useEffect(() => {
+        if (authStep !== 'ready') return
+
+        // Initial fetch
+        loadStats()
+        loadPendingPayments()
+
+        // Set interval to fetch stats and payments every 5 seconds
+        const interval = setInterval(() => {
+            loadStats()
+            loadPendingPayments()
+        }, 5000)
+
+        return () => clearInterval(interval)
+    }, [authStep, loadStats, loadPendingPayments])
 
     // ─── Denied Screen ────────────────────────────────────────────
     if (authStep === 'denied') {
@@ -371,21 +421,33 @@ export default function OwnerPage() {
                                 {/* Key Metrics Grid */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {[
-                                        { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-                                        { label: 'Total Listings', value: stats.totalListings, icon: Home, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
-                                        { label: 'Total Messages', value: stats.totalMessages, icon: MessageSquare, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-                                        { label: 'Total Payments', value: stats.totalPayments, icon: DollarSign, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-                                    ].map(m => (
-                                        <div key={m.label} className="bg-neutral-900 border border-white/5 rounded-[24px] p-6 space-y-4">
-                                            <div className={`w-10 h-10 ${m.bg} border rounded-2xl flex items-center justify-center`}>
-                                                <m.icon size={18} className={m.color} />
+                                        { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', clickable: true, onClick: () => { setShowUsersModal(true); loadAllUsersList(); } },
+                                        { label: 'Total Listings', value: stats.totalListings, icon: Home, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20', clickable: true, onClick: () => { setShowListingsModal(true); loadAllListingsList(); } },
+                                        { label: 'Total Messages', value: stats.totalMessages, icon: MessageSquare, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', clickable: false },
+                                        { label: 'Total Payments', value: stats.totalPayments, icon: DollarSign, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', clickable: true, onClick: () => { setActiveTab('payments'); loadPendingPayments(); } },
+                                    ].map(m => {
+                                        const isClickable = m.clickable;
+                                        return (
+                                            <div key={m.label} 
+                                                onClick={isClickable ? m.onClick : undefined}
+                                                className={`bg-neutral-900 border border-white/5 rounded-[24px] p-6 space-y-4 ${
+                                                    isClickable 
+                                                        ? 'cursor-pointer hover:border-amber-500/30 hover:bg-neutral-900/60 hover:-translate-y-1 active:translate-y-0' 
+                                                        : ''
+                                                } transition-all duration-300`}>
+                                                <div className={`w-10 h-10 ${m.bg} border rounded-2xl flex items-center justify-center`}>
+                                                    <m.icon size={18} className={m.color} />
+                                                </div>
+                                                <div>
+                                                    <div className="text-3xl font-black text-white">{m.value.toLocaleString()}</div>
+                                                    <div className="text-neutral-500 text-xs font-bold uppercase tracking-widest mt-1">
+                                                        {m.label}
+                                                        {isClickable && <span className="block text-[8px] text-amber-500/60 font-medium uppercase mt-0.5 tracking-wider">Click to view</span>}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div className="text-3xl font-black text-white">{m.value.toLocaleString()}</div>
-                                                <div className="text-neutral-500 text-xs font-bold uppercase tracking-widest mt-1">{m.label}</div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Today's Activity */}
@@ -732,11 +794,11 @@ export default function OwnerPage() {
                             {/* Headline stats */}
                             <div className="grid grid-cols-2 gap-4 bg-white/3 p-4 rounded-2xl border border-white/5">
                                 <div>
-                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block">Total Month Visits</span>
+                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Total Month Visits</span>
                                     <span className="text-2xl font-black text-white block mt-1">{totalVisits.toLocaleString()}</span>
                                 </div>
                                 <div>
-                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block">Daily Average</span>
+                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Daily Average</span>
                                     <span className="text-2xl font-black text-amber-400 block mt-1">{avgVisits.toLocaleString()}</span>
                                 </div>
                             </div>
@@ -791,12 +853,135 @@ export default function OwnerPage() {
                                     ))}
                                 </svg>
                             </div>
-
-
                         </div>
                     </div>
                 );
             })()}
+
+            {/* ── ALL USERS MODAL ── */}
+            {showUsersModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+                    <div className="bg-neutral-900 border border-amber-500/20 rounded-[32px] p-8 max-w-2xl w-full shadow-2xl space-y-6 relative overflow-hidden flex flex-col max-h-[85vh]">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[80px] pointer-events-none" />
+                        
+                        <button onClick={() => setShowUsersModal(false)}
+                            className="absolute top-6 right-6 w-10 h-10 bg-white/5 border border-white/10 hover:bg-white/10 text-neutral-400 hover:text-white rounded-full flex items-center justify-center transition-all z-10">
+                            <X size={18} />
+                        </button>
+
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <Users className="text-amber-400" size={20} />
+                                <h2 className="text-xl font-black text-white uppercase tracking-wider">All Registered Users</h2>
+                            </div>
+                            <p className="text-neutral-500 text-sm">Managing the platform's user profiles and details</p>
+                        </div>
+
+                        {/* Search or quick stats */}
+                        <div className="bg-white/3 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                            <div>
+                                <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Total Platform Users</span>
+                                <span className="text-2xl font-black text-white block mt-0.5">{usersList.length || stats?.totalUsers || 0}</span>
+                            </div>
+                            <button onClick={loadAllUsersList} disabled={loadingUsersList}
+                                className="h-9 px-3 bg-white/5 hover:bg-white/10 text-xs font-bold text-neutral-300 rounded-lg flex items-center gap-2 border border-white/5 transition-all">
+                                <RefreshCw size={12} className={loadingUsersList ? 'animate-spin' : ''} /> Refresh List
+                            </button>
+                        </div>
+
+                        {/* List area */}
+                        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                            {loadingUsersList ? (
+                                <div className="flex justify-center py-12">
+                                    <Loader2 className="animate-spin text-amber-400" size={32} />
+                                </div>
+                            ) : usersList.length === 0 ? (
+                                <p className="text-neutral-500 text-center py-8">No users found or loading...</p>
+                            ) : (
+                                usersList.map((user: any) => (
+                                    <div key={user.id} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex items-center justify-between hover:border-white/15 transition-all">
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-white text-sm truncate">{user.full_name || 'Anonymous User'}</p>
+                                            <p className="text-xs text-neutral-500 mt-0.5">{user.email || user.phone_number || 'No contact info'}</p>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                                                user.role === 'admin' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                user.role === 'owner' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                            }`}>{user.role || 'user'}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── ALL LISTINGS MODAL ── */}
+            {showListingsModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+                    <div className="bg-neutral-900 border border-amber-500/20 rounded-[32px] p-8 max-w-2xl w-full shadow-2xl space-y-6 relative overflow-hidden flex flex-col max-h-[85vh]">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[80px] pointer-events-none" />
+                        
+                        <button onClick={() => setShowListingsModal(false)}
+                            className="absolute top-6 right-6 w-10 h-10 bg-white/5 border border-white/10 hover:bg-white/10 text-neutral-400 hover:text-white rounded-full flex items-center justify-center transition-all z-10">
+                            <X size={18} />
+                        </button>
+
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <Home className="text-amber-400" size={20} />
+                                <h2 className="text-xl font-black text-white uppercase tracking-wider">All Platform Listings</h2>
+                            </div>
+                            <p className="text-neutral-500 text-sm">Managing the platform's active and pending properties</p>
+                        </div>
+
+                        {/* Quick stats / controls */}
+                        <div className="bg-white/3 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                            <div>
+                                <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Total Listings</span>
+                                <span className="text-2xl font-black text-white block mt-0.5">{listingsList.length || stats?.totalListings || 0}</span>
+                            </div>
+                            <button onClick={loadAllListingsList} disabled={loadingListingsList}
+                                className="h-9 px-3 bg-white/5 hover:bg-white/10 text-xs font-bold text-neutral-300 rounded-lg flex items-center gap-2 border border-white/5 transition-all">
+                                <RefreshCw size={12} className={loadingListingsList ? 'animate-spin' : ''} /> Refresh List
+                            </button>
+                        </div>
+
+                        {/* Listings List area */}
+                        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                            {loadingListingsList ? (
+                                <div className="flex justify-center py-12">
+                                    <Loader2 className="animate-spin text-amber-400" size={32} />
+                                </div>
+                            ) : listingsList.length === 0 ? (
+                                <p className="text-neutral-500 text-center py-8">No listings found or loading...</p>
+                            ) : (
+                                listingsList.map((listing: any) => (
+                                    <div key={listing.id} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex items-center justify-between gap-4 hover:border-white/15 transition-all">
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-white text-sm truncate">{listing.title || 'Untitled Property'}</p>
+                                            <p className="text-xs text-neutral-500 mt-0.5">
+                                                By: {listing.profiles?.full_name || 'Unknown Host'} · {listing.property_type || 'Property'}
+                                            </p>
+                                        </div>
+                                        <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
+                                            <span className="text-white font-black text-sm">ETB {Number(listing.price || 0).toLocaleString()}</span>
+                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                                                listing.status === 'published' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                listing.status === 'pending_payment' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                'bg-neutral-500/10 text-neutral-400 border-white/10'
+                                            }`}>{listing.status}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

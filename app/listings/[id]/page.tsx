@@ -8,6 +8,9 @@ import MapView from "@/components/map-view"
 import { StarRating } from "@/components/star-rating"
 
 export default async function ListingPage({ params }: { params: { id: string } }) {
+    // Increment views count using the RPC function
+    await supabase.rpc('increment_listing_views', { target_listing_id: params.id })
+
     const { data: listing, error } = await supabase
         .from('listings')
         .select('*')
