@@ -157,8 +157,8 @@ export default function OwnerPage() {
         setLoadingMonthlyVisits(false)
     }, [])
 
-    const loadStats = useCallback(async () => {
-        setLoadingStats(true)
+    const loadStats = useCallback(async (silent = false) => {
+        if (!silent) setLoadingStats(true)
         try {
             const today = new Date()
             today.setHours(0, 0, 0, 0)
@@ -207,22 +207,21 @@ export default function OwnerPage() {
                 visitorsToday
             })
         } catch (err) {
-            showToast('error', 'Failed to load platform stats')
+            if (!silent) showToast('error', 'Failed to load platform stats')
         }
-        setLoadingStats(false)
+        if (!silent) setLoadingStats(false)
     }, [])
 
     useEffect(() => {
         if (authStep !== 'ready') return
 
-        // Initial fetch
-        loadStats()
+        // Initial fetch — show loading spinner only on first load
+        loadStats(false)
         loadPendingPayments()
 
-        // Set interval to fetch stats and payments every 5 seconds
+        // Background silent refresh every 5 seconds — no visible flash
         const interval = setInterval(() => {
-            loadStats()
-            loadPendingPayments()
+            loadStats(true)   // silent: no loading spinner
         }, 5000)
 
         return () => clearInterval(interval)
