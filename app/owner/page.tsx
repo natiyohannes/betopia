@@ -369,7 +369,7 @@ export default function OwnerPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button onClick={loadStats} disabled={loadingStats}
+                        <button onClick={() => loadStats(false)} disabled={loadingStats}
                             className="w-9 h-9 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-all">
                             <RefreshCw size={15} className={loadingStats ? 'animate-spin text-amber-400' : 'text-neutral-400'} />
                         </button>
@@ -531,7 +531,7 @@ export default function OwnerPage() {
                                 </div>
                             </>
                         ) : (
-                            <div className="text-center py-20 text-neutral-500">No stats available. <button onClick={loadStats} className="text-amber-400 underline">Try again</button></div>
+                            <div className="text-center py-20 text-neutral-500">No stats available. <button onClick={() => loadStats(false)} className="text-amber-400 underline">Try again</button></div>
                         )}
                     </div>
                 )}
