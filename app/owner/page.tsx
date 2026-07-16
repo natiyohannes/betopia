@@ -183,7 +183,7 @@ export default function OwnerPage() {
             ])
 
             // Query daily_stats table for today's real visitor count (tracked per unique session)
-            const todayDate = today.toISOString().split('T')[0]
+            const todayDate = new Date().toISOString().split('T')[0]
             const { data: dailyStatsData } = await supabase
                 .from('daily_stats')
                 .select('visitor_count')
