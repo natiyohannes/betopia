@@ -56,6 +56,7 @@ export default function OwnerPage() {
     const [loadingListingsList, setLoadingListingsList] = useState(false)
     const [monthlyVisitsData, setMonthlyVisitsData] = useState<{ day: number; date: string; count: number }[]>([])
     const [loadingMonthlyVisits, setLoadingMonthlyVisits] = useState(false)
+    const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; date: string; count: number } | null>(null)
 
     const showToast = (type: 'success' | 'error', msg: string) => {
         setToast({ type, msg })
@@ -792,11 +793,11 @@ export default function OwnerPage() {
                 const paddingTop = 20;
                 const paddingBottom = 30;
 
-                // Map monthly data to coordinates
+                // Map monthly data to coordinates (include date for tooltip)
                 const points = slots.map((d, index) => {
                     const x = paddingLeft + (index / (slots.length - 1)) * (chartWidth - paddingLeft - paddingRight);
                     const y = chartHeight - paddingBottom - (d.count / maxVal) * (chartHeight - paddingTop - paddingBottom);
-                    return { x, y, day: d.day, count: d.count };
+                    return { x, y, day: d.day, count: d.count, date: d.date };
                 });
 
                 const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
@@ -881,24 +882,55 @@ export default function OwnerPage() {
                                     {/* Trend Line */}
                                     <path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 
-                                    {/* Data dots (start, peak, end) */}
-                                    {points.filter((_, idx) => idx % 6 === 0 || idx === points.length - 1).map((p, idx) => (
-                                        <g key={idx} className="group/dot">
-                                            <circle cx={p.x} cy={p.y} r="4" fill="#f59e0b" stroke="#000" strokeWidth="1.5" />
-                                            <text x={p.x} y={p.y - 8} fill="#fff" fontSize="8" fontWeight="black" textAnchor="middle" className="opacity-60 group-hover/dot:opacity-100 transition-opacity">
-                                                {p.count}
-                                            </text>
+                                    {/* Data dots — ALL points with hover tooltip */}
+                                    {points.map((p, idx) => (
+                                        <g key={idx}
+                                            onMouseEnter={() => setHoveredPoint({ x: p.x, y: p.y, date: p.date, count: p.count })}
+                                            onMouseLeave={() => setHoveredPoint(null)}
+                                            style={{ cursor: p.count > 0 ? 'pointer' : 'default' }}>
+                                            <circle cx={p.x} cy={p.y} r={p.count > 0 ? 5 : 3}
+                                                fill={p.count > 0 ? '#f59e0b' : '#374151'}
+                                                stroke={p.count > 0 ? '#000' : 'none'}
+                                                strokeWidth="1.5"
+                                                className="transition-all"
+                                            />
+                                            {/* Invisible larger hit area for easier hover */}
+                                            <circle cx={p.x} cy={p.y} r="10" fill="transparent" />
                                         </g>
                                     ))}
 
-                                    {/* X-Axis labels */}
-                                    {points.filter((_, idx) => idx === 0 || idx === 9 || idx === 19 || idx === 29).map((p, idx) => (
-                                        <text key={idx} x={p.x} y={chartHeight - 10} fill="#6b7280" fontSize="8" fontWeight="bold" textAnchor="middle">
-                                            Day {p.day}
-                                        </text>
-                                    ))}
+                                    {/* X-Axis date labels for key days */}
+                                    {points.filter((_, idx) => idx === 0 || idx === 9 || idx === 19 || idx === 29).map((p, idx) => {
+                                        const d = new Date(p.date);
+                                        const label = `${d.toLocaleString('default', { month: 'short' })} ${d.getDate()}`;
+                                        return (
+                                            <text key={idx} x={p.x} y={chartHeight - 10} fill="#6b7280" fontSize="8" fontWeight="bold" textAnchor="middle">
+                                                {label}
+                                            </text>
+                                        );
+                                    })}
                                 </svg>
-                            </div>
+
+                                {/* Hover tooltip overlay */}
+                                {hoveredPoint && (
+                                    <div className="absolute pointer-events-none z-10 bg-neutral-800 border border-amber-500/30 rounded-xl px-3 py-2 shadow-xl text-xs"
+                                        style={{
+                                            left: `${(hoveredPoint.x / 500) * 100}%`,
+                                            top: `${(hoveredPoint.y / 220) * 100}%`,
+                                            transform: 'translate(-50%, -130%)'
+                                        }}>
+                                        <div className="text-amber-400 font-black">
+                                            {new Date(hoveredPoint.date).toLocaleDateString('en-US', {
+                                                weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                                            })}
+                                        </div>
+                                        <div className="text-white font-bold mt-0.5">
+                                            {hoveredPoint.count} {hoveredPoint.count === 1 ? 'visitor' : 'visitors'}
+                                        </div>
+                                        {/* Arrow */}
+                                        <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-2.5 h-2.5 bg-neutral-800 border-r border-b border-amber-500/30 rotate-45" />
+                                    </div>
+                                )}
                         </div>
                     </div>
                 );
