@@ -505,9 +505,14 @@ export default function OwnerPage() {
                                                 className="flex items-center justify-between p-3 bg-white/3 hover:bg-white/5 rounded-xl cursor-pointer transition-all group">
                                                 <div className="flex items-center gap-3">
                                                     <Activity size={16} className="text-amber-400 group-hover:scale-110 transition-transform" />
-                                                    <span className="text-neutral-300 font-medium text-sm">Daily Visitors</span>
+                                                    <div>
+                                                        <span className="text-neutral-300 font-medium text-sm block">Daily Visitors</span>
+                                                        <span className="text-[10px] text-amber-500/60 font-medium">Click to see 30-day chart →</span>
+                                                    </div>
                                                 </div>
-                                                <span className="text-white font-black text-lg">+{stats.visitorsToday}</span>
+                                                <span className={`font-black text-lg ${stats.visitorsToday > 0 ? 'text-green-400' : 'text-white'}`}>
+                                                    {stats.visitorsToday > 0 ? `+${stats.visitorsToday}` : '0'}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -798,7 +803,9 @@ export default function OwnerPage() {
                 const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartHeight - paddingBottom} L ${points[0].x} ${chartHeight - paddingBottom} Z`;
                 
                 const totalVisits = slots.reduce((sum, d) => sum + d.count, 0);
-                const avgVisits = Math.round(totalVisits / 30);
+                const activeDays = slots.filter(d => d.count > 0).length || 1;
+                const avgVisits = (totalVisits / activeDays).toFixed(1);
+                const todayCount = slots[slots.length - 1]?.count ?? 0;
 
                 return (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
@@ -827,14 +834,18 @@ export default function OwnerPage() {
                             </div>
 
                             {/* Headline stats */}
-                            <div className="grid grid-cols-2 gap-4 bg-white/3 p-4 rounded-2xl border border-white/5">
+                            <div className="grid grid-cols-3 gap-3 bg-white/3 p-4 rounded-2xl border border-white/5">
                                 <div>
-                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Total Month Visits</span>
+                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">30-Day Total</span>
                                     <span className="text-2xl font-black text-white block mt-1">{totalVisits.toLocaleString()}</span>
                                 </div>
                                 <div>
-                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Daily Average</span>
-                                    <span className="text-2xl font-black text-amber-400 block mt-1">{avgVisits.toLocaleString()}</span>
+                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Avg / Active Day</span>
+                                    <span className="text-2xl font-black text-amber-400 block mt-1">{avgVisits}</span>
+                                </div>
+                                <div>
+                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Today</span>
+                                    <span className="text-2xl font-black text-green-400 block mt-1">{todayCount}</span>
                                 </div>
                             </div>
 
