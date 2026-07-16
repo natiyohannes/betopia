@@ -931,6 +931,7 @@ export default function OwnerPage() {
                                         <div className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-2.5 h-2.5 bg-neutral-800 border-r border-b border-amber-500/30 rotate-45" />
                                     </div>
                                 )}
+                            </div>
                         </div>
                     </div>
                 );
