@@ -1,7 +1,6 @@
-"use client"
-
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { X, Globe, Check } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n'
 
 const ETHIOPIAN_LANGUAGES = [
     { code: 'am', name: 'Amharic', native: 'አማርኛ' },
@@ -26,8 +25,8 @@ const WORLD_LANGUAGES = [
     { code: 'pt', name: 'Portuguese', native: 'Português' },
     { code: 'ru', name: 'Russian', native: 'Русский' },
     { code: 'ja', name: 'Japanese', native: '日本語' },
-    { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
-    { code: 'mr', name: 'Marathi', native: 'मराठी' },
+    { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬী' },
+    { code: 'mr', name: 'Marathi', native: 'मраठी' },
     { code: 'te', name: 'Telugu', native: 'తెలుగు' },
     { code: 'wuu', name: 'Wu Chinese', native: '吴语' },
     { code: 'fr', name: 'French', native: 'Français' },
@@ -35,17 +34,11 @@ const WORLD_LANGUAGES = [
 ]
 
 export function SiteFooter() {
-    const [selectedLang, setSelectedLang] = useState('English (US)')
+    const { language: selectedLang, setLanguage, t } = useTranslation()
     const [isOpen, setIsOpen] = useState(false)
 
-    useEffect(() => {
-        const saved = localStorage.getItem('user_language')
-        if (saved) setSelectedLang(saved)
-    }, [])
-
     const handleSelect = (langName: string) => {
-        setSelectedLang(langName)
-        localStorage.setItem('user_language', langName)
+        setLanguage(langName)
         setIsOpen(false)
     }
 
@@ -54,7 +47,7 @@ export function SiteFooter() {
             <div className="max-w-[2520px] mx-auto xl:px-20 md:px-10 sm:px-2 px-4 py-20">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
                     <div className="space-y-6">
-                        <h5 className="font-black text-white uppercase tracking-widest text-xs">Support</h5>
+                        <h5 className="font-black text-white uppercase tracking-widest text-xs">{t('footer_support')}</h5>
                         <ul className="space-y-4 font-medium">
                             <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
                             <li><a href="#" className="hover:text-white transition-colors">Safety information</a></li>
@@ -64,7 +57,7 @@ export function SiteFooter() {
                         </ul>
                     </div>
                     <div className="space-y-6">
-                        <h5 className="font-black text-white uppercase tracking-widest text-xs">Hosting</h5>
+                        <h5 className="font-black text-white uppercase tracking-widest text-xs">{t('footer_hosting')}</h5>
                         <ul className="space-y-4 font-medium">
                             <li><a href="#" className="hover:text-white transition-colors">List your property</a></li>
                             <li><a href="#" className="hover:text-white transition-colors">AirCover for Hosts</a></li>
@@ -74,7 +67,7 @@ export function SiteFooter() {
                         </ul>
                     </div>
                     <div className="space-y-6">
-                        <h5 className="font-black text-white uppercase tracking-widest text-xs">Betopia</h5>
+                        <h5 className="font-black text-white uppercase tracking-widest text-xs">{t('footer_betopia')}</h5>
                         <ul className="space-y-4 font-medium">
                             <li><a href="#" className="hover:text-white transition-colors">Newsroom</a></li>
                             <li><a href="#" className="hover:text-white transition-colors">Learn about new features</a></li>
@@ -84,7 +77,7 @@ export function SiteFooter() {
                         </ul>
                     </div>
                     <div className="space-y-6">
-                        <h5 className="font-black text-white uppercase tracking-widest text-xs">Regions</h5>
+                        <h5 className="font-black text-white uppercase tracking-widest text-xs">{t('footer_regions')}</h5>
                         <ul className="space-y-4 font-medium">
                             <li><a href="#" className="hover:text-white transition-colors">Addis Ababa</a></li>
                             <li><a href="#" className="hover:text-white transition-colors">Hawassa</a></li>
@@ -99,9 +92,9 @@ export function SiteFooter() {
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 font-medium">
                         <span className="text-neutral-500">© 2024 Betopia, Inc.</span>
                         <div className="flex gap-4">
-                            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-                            <a href="#" className="hover:text-white transition-colors">Terms</a>
-                            <a href="#" className="hover:text-white transition-colors">Sitemap</a>
+                            <a href="#" className="hover:text-white transition-colors">{t('footer_privacy')}</a>
+                            <a href="#" className="hover:text-white transition-colors">{t('footer_terms')}</a>
+                            <a href="#" className="hover:text-white transition-colors">{t('footer_sitemap')}</a>
                         </div>
                     </div>
                     <div className="flex gap-8 font-bold text-white">

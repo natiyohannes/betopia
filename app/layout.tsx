@@ -4,6 +4,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { NotificationProvider } from "@/components/notification-provider";
+import { LanguageProvider } from "@/lib/i18n";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,13 +21,15 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={inter.className} suppressHydrationWarning>
-                <NotificationProvider>
-                    <SiteHeader />
-                    <div className="pb-20 pt-28 min-h-screen">
-                        {children}
-                    </div>
-                    <SiteFooter />
-                </NotificationProvider>
+                <LanguageProvider>
+                    <NotificationProvider>
+                        <SiteHeader />
+                        <div className="pb-20 pt-28 min-h-screen">
+                            {children}
+                        </div>
+                        <SiteFooter />
+                    </NotificationProvider>
+                </LanguageProvider>
             </body>
         </html>
     );

@@ -6,8 +6,10 @@ import { supabase } from "@/lib/supabaseClient"
 import { useEffect, useState, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useNotifications } from "./notification-provider"
+import { useTranslation } from "@/lib/i18n"
 
 export function SiteHeader() {
+    const { t } = useTranslation()
     const [user, setUser] = useState<any>(null)
     const [isOpen, setIsOpen] = useState(false)
     const [isNotifOpen, setIsNotifOpen] = useState(false)
@@ -45,10 +47,10 @@ export function SiteHeader() {
     }
 
     const navLinks = [
-        { name: "Find a Home", href: "/" },
-        { name: "My Bookings", href: "/dashboard/bookings" },
-        { name: "Messages", href: "/dashboard/messages" },
-        { name: "About Us", href: "/about" },
+        { name: t('nav_find_home'), href: "/" },
+        { name: t('nav_bookings'), href: "/dashboard/bookings" },
+        { name: t('messages'), href: "/dashboard/messages" },
+        { name: t('nav_about'), href: "/about" },
     ]
 
     return (
