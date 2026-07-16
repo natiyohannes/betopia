@@ -804,8 +804,7 @@ export default function OwnerPage() {
                 const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartHeight - paddingBottom} L ${points[0].x} ${chartHeight - paddingBottom} Z`;
                 
                 const totalVisits = slots.reduce((sum, d) => sum + d.count, 0);
-                const activeDays = slots.filter(d => d.count > 0).length || 1;
-                const avgVisits = (totalVisits / activeDays).toFixed(1);
+                const avgVisits = (totalVisits / 30).toFixed(1);
                 const todayCount = slots[slots.length - 1]?.count ?? 0;
 
                 return (
@@ -841,7 +840,7 @@ export default function OwnerPage() {
                                     <span className="text-2xl font-black text-white block mt-1">{totalVisits.toLocaleString()}</span>
                                 </div>
                                 <div>
-                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Avg / Active Day</span>
+                                    <span className="text-neutral-500 text-[10px] font-black uppercase tracking-widest block font-bold">Daily Average</span>
                                     <span className="text-2xl font-black text-amber-400 block mt-1">{avgVisits}</span>
                                 </div>
                                 <div>
