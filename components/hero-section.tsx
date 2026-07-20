@@ -24,12 +24,8 @@ export function HeroSection() {
             <div className="relative z-10 max-w-[2520px] mx-auto xl:px-20 md:px-10 sm:px-2 px-4 pt-20">
                 <div className="max-w-3xl">
                     <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-8 animate-in slide-in-from-left duration-1000 drop-shadow-2xl">
-                        {t('hero_title').split(' HAS A ')[0]}
-                        <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff385c] via-[#ff385c] to-purple-500 drop-shadow-md">
-                            {t('hero_title').includes(' HAS A ')
-                                ? 'HAS A STORY.'
-                                : t('hero_title').split('\n').slice(1).join(' ') || t('hero_title')}
+                            {t('hero_title')}
                         </span>
                     </h1>
                     <p className="text-xl md:text-2xl text-neutral-100 font-medium max-w-xl mb-12 leading-relaxed animate-in fade-in duration-1000 delay-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">

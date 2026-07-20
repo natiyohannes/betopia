@@ -63,15 +63,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 setUserId(user.id)
                 fetchNotifications(user.id)
             }
-        }
-        const trackVisitor = async () => {
-            if (typeof window !== 'undefined' && !sessionStorage.getItem('visitor_tracked')) {
+
+            // Track visitor — skip if owner account to keep stats accurate
+            const OWNER_EMAIL = 'betopia.et@gmail.com'
+            const isOwner = user?.email === OWNER_EMAIL
+            if (!isOwner && typeof window !== 'undefined' && !sessionStorage.getItem('visitor_tracked')) {
                 await supabase.rpc('increment_daily_visitors')
                 sessionStorage.setItem('visitor_tracked', 'true')
             }
         }
         init()
-        trackVisitor()
     }, [])
 
     useEffect(() => {
