@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { HeartButton } from "./heart-button"
 import { Bed, Bath, Maximize, Phone, MapPin, ChevronRight, Clock } from "lucide-react"
+import { useTranslation } from "@/lib/i18n"
 
 interface ListingCardProps {
     data: {
@@ -21,12 +22,16 @@ interface ListingCardProps {
         created_at: string;
         average_rating?: number;
         profiles?: {
+            id: string;
+            full_name: string;
+            avatar_url: string;
             phone_number: string;
         } | any;
     }
 }
 
 export function ListingCard({ data }: ListingCardProps) {
+    const { t } = useTranslation();
     const [isExpired, setIsExpired] = useState(false);
     const mainImage = data.images?.[0] || "https://images.unsplash.com/photo-1518780664697-55e3ad937233";
 
@@ -87,14 +92,14 @@ export function ListingCard({ data }: ListingCardProps) {
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                     {isExpired && (
                         <span className="bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase">
-                            Expired
+                            {t('expired')}
                         </span>
                     )}
                     <span className={`
                         px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase
                         ${data.is_rent ? 'bg-[#ff385c] text-white' : 'bg-cyan-500 text-white'}
                     `}>
-                        {data.is_rent ? 'For Rent' : 'For Sale'}
+                        {data.is_rent ? t('for_rent') : t('for_sale')}
                     </span>
                 </div>
 
@@ -146,9 +151,9 @@ export function ListingCard({ data }: ListingCardProps) {
                         )}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="text-[10px] text-neutral-500 uppercase font-black tracking-widest leading-none">Listed by</div>
+                        <div className="text-[10px] text-neutral-500 uppercase font-black tracking-widest leading-none">{t('listed_by')}</div>
                         <div className="text-sm font-bold text-white truncate group-hover/profile:text-[#ff385c] transition-colors">
-                            {data.profiles?.full_name || 'Anonymous User'}
+                            {data.profiles?.full_name || t('anonymous')}
                         </div>
                     </div>
                     <ChevronRight size={16} className="text-neutral-600 group-hover/profile:text-white transition-all transform group-hover/profile:translate-x-1" />
@@ -165,15 +170,15 @@ export function ListingCard({ data }: ListingCardProps) {
                 <div className="pt-4 border-t border-gray-800 flex justify-between items-center text-gray-400 text-[13px] font-medium">
                     <div className="flex items-center gap-1.5">
                         <Bed size={16} />
-                        <span>{data.bedrooms} Beds</span>
+                        <span>{data.bedrooms} {t('beds')}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <Bath size={16} />
-                        <span>{data.bathrooms} Baths</span>
+                        <span>{data.bathrooms} {t('baths')}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <Maximize size={16} />
-                        <span>{data.sqft} SQM</span>
+                        <span>{data.sqft} {t('sqm')}</span>
                     </div>
                 </div>
 
@@ -181,10 +186,10 @@ export function ListingCard({ data }: ListingCardProps) {
                 <div className="pt-3 flex justify-between items-center text-[10px] text-neutral-500 font-bold uppercase tracking-widest border-t border-gray-800/50">
                     <div className="flex items-center gap-1.5">
                         <Clock size={12} className="text-[#ff385c]" />
-                        <span>Listed: {new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span>{t('listed')}: {new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
                     <div>
-                        Exp: {new Date(new Date(data.created_at).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {t('exp')}: {new Date(new Date(data.created_at).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                 </div>
             </div>

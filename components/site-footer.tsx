@@ -114,7 +114,7 @@ export function SiteFooter() {
 
             {/* Language Picker Modal */}
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                     <div className="bg-neutral-900 border border-white/10 rounded-[32px] max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
                         {/* Header */}
                         <div className="p-6 border-b border-white/5 flex items-center justify-between">

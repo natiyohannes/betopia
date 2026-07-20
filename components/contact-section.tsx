@@ -1,6 +1,7 @@
 "use client"
 
 import { Phone, Mail } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n'
 
 const TikTokIcon = ({ size = 24, className = "" }: { size?: number, className?: string }) => (
     <svg 
@@ -14,36 +15,55 @@ const TikTokIcon = ({ size = 24, className = "" }: { size?: number, className?: 
     </svg>
 );
 
+interface ContactItemProps {
+    icon: React.ReactNode;
+    title: string;
+    value: string;
+}
+
+function ContactItem({ icon, title, value }: ContactItemProps) {
+    return (
+        <div className="flex flex-col items-center gap-3 p-6 rounded-3xl bg-white/[0.02] border border-white/5 hover:bg-white/10 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                {icon}
+            </div>
+            <div className="text-xs font-black uppercase tracking-widest text-neutral-500">{title}</div>
+            <div className="text-lg font-bold text-white mt-1">{value}</div>
+        </div>
+    )
+}
+
 export function ContactSection() {
+    const { t } = useTranslation()
+
     return (
         <div className="bg-neutral-900 rounded-[80px] p-20 flex flex-col items-center text-center gap-12 overflow-hidden relative shadow-2xl mx-4 md:mx-20 my-20">
             <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#ff385c]/10 rounded-full blur-[100px]" />
             <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]" />
             
             <h2 className="text-6xl md:text-8xl font-black text-white leading-none tracking-tighter">
-                READY TO FIND <br />
-                YOUR NEXT STORY?
+                {t('ready_to_find')}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 w-full max-w-5xl mt-12 bg-white/5 backdrop-blur-3xl p-12 rounded-[50px] border border-white/10 z-10">
                 <button 
                     onClick={() => {
                         navigator.clipboard.writeText("+251930614550");
-                        alert("Phone number copied to clipboard!");
+                        alert(t('phone_copied'));
                     }}
                     className="transition-transform hover:scale-105"
                 >
-                    <ContactItem icon={<Phone size={24} className="text-[#ff385c]" />} title="CALL US" value="+251930614550" />
+                    <ContactItem icon={<Phone size={24} className="text-[#ff385c]" />} title={t('call_us')} value="+251930614550" />
                 </button>
 
                 <button 
                     onClick={() => {
                         navigator.clipboard.writeText("betopia.et@gmail.com");
-                        alert("Email address copied to clipboard!");
+                        alert(t('email_copied'));
                     }}
                     className="transition-transform hover:scale-105"
                 >
-                    <ContactItem icon={<Mail size={24} className="text-[#ff385c]" />} title="EMAIL US" value="betopia.et@gmail.com" />
+                    <ContactItem icon={<Mail size={24} className="text-[#ff385c]" />} title={t('email_us')} value="betopia.et@gmail.com" />
                 </button>
 
                 <a 
@@ -52,21 +72,9 @@ export function ContactSection() {
                     rel="noopener noreferrer"
                     className="transition-transform hover:scale-105"
                 >
-                    <ContactItem icon={<TikTokIcon size={24} className="text-[#ff385c]" />} title="TIKTOK" value="Betopia.et" />
+                    <ContactItem icon={<TikTokIcon size={24} className="text-[#ff385c]" />} title={t('tiktok')} value="Betopia.et" />
                 </a>
             </div>
         </div>
     );
-}
-
-function ContactItem({ icon, title, value }: any) {
-    return (
-        <div className="flex flex-col items-center gap-4">
-            <div className="p-4 bg-white/5 rounded-2xl">
-                {icon}
-            </div>
-            <h4 className="text-xs font-black text-neutral-500 tracking-[0.2em]">{title}</h4>
-            <p className="text-white text-lg font-bold">{value}</p>
-        </div>
-    )
 }
