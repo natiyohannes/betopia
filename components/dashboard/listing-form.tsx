@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Camera, Trash2, ArrowRight, ArrowLeft } from "lucide-react"
+import { MapPicker } from "@/components/map-picker"
 
 interface ListingFormProps {
     initialData?: any;
@@ -142,6 +143,12 @@ export default function ListingForm({ initialData, listingId, isEditing = false 
         if (e) e.preventDefault()
         if (step < 2) {
             setStep(step + 1)
+            return
+        }
+
+        // Validate mandatory location
+        if (shouldPublish && (!formData.latitude || !formData.longitude)) {
+            alert("📍 Location is mandatory! Please pin your property on the map before publishing.")
             return
         }
 
@@ -396,28 +403,22 @@ export default function ListingForm({ initialData, listingId, isEditing = false 
                             </div>
 
                             <div className="space-y-4 pt-6">
-                                <Label className="text-lg font-semibold">Location (Optional Pin)</Label>
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="paste_coords" className="text-xs text-muted-foreground">Paste coordinates (e.g. 9.02, 38.75) to split at once</Label>
-                                        <Input
-                                            id="paste_coords"
-                                            placeholder="Paste Lat, Lng here..."
-                                            onChange={handlePasteCoordinates}
-                                            className="bg-muted/50 border-dashed"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="lat">Latitude</Label>
-                                            <Input id="lat" name="latitude" type="number" step="any" value={formData.latitude} onChange={handleChange} placeholder="9.005..." />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="lng">Longitude</Label>
-                                            <Input id="lng" name="longitude" type="number" step="any" value={formData.longitude} onChange={handleChange} placeholder="38.76..." />
-                                        </div>
-                                    </div>
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-lg font-semibold">Property Location on Map</Label>
+                                    <span className="text-[#ff385c] text-sm font-bold">* Required</span>
                                 </div>
+                                <p className="text-sm text-neutral-400">Click on the map or drag the pin to mark your property's exact location. Buyers will see this on the listing page.</p>
+                                <MapPicker
+                                    lat={formData.latitude ? parseFloat(formData.latitude) : null}
+                                    lng={formData.longitude ? parseFloat(formData.longitude) : null}
+                                    onChange={(lat, lng) => {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            latitude: lat.toString(),
+                                            longitude: lng.toString()
+                                        }))
+                                    }}
+                                />
                             </div>
                         </div>
                     )}

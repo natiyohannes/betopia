@@ -1,9 +1,9 @@
 import { supabase } from "@/lib/supabaseClient"
-import { SearchFilters } from "@/components/search-filters" // We can reuse or restyle this
+import { SearchFilters } from "@/components/search-filters"
 import { ListingCard } from "@/components/listing-card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Map } from "lucide-react"
+import { SearchMap } from "@/components/search-map"
 
 export const dynamic = 'force-dynamic'
 
@@ -87,19 +87,11 @@ export default async function SearchPage({
                 )}
             </div>
 
-            {/* Right: Fixed Map */}
+            {/* Right: Live Map */}
             <div className="hidden md:block flex-1 bg-black relative h-full">
-                {/* Map Placeholder */}
-                <div className="w-full h-full flex items-center justify-center bg-neutral-900 text-neutral-600 flex-col gap-4 border-l border-white/10">
-                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-2">
-                        <Map size={40} className="text-neutral-700" />
-                    </div>
-                    <span className="font-black text-xl tracking-widest uppercase">Interactive Map</span>
-                    <span className="text-sm text-neutral-500">Map integration coming soon</span>
-                </div>
-
-                {/* Show Map Button (Mobile Float - Optional but good for Airbnb feel) */}
+                <SearchMap listings={listings} />
             </div>
         </div>
     )
 }
+
