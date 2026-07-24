@@ -1,9 +1,10 @@
 import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
-import { Star, MapPin, Share, UserCircle, Sparkles } from "lucide-react"
+import { Star, MapPin, UserCircle, Sparkles } from "lucide-react"
 import { Ai3DViewer } from "@/components/ai-3d-viewer"
 import { ContactOwnerForm } from "@/components/contact-owner-form"
 import { HeartButton } from "@/components/heart-button"
+import { ShareButton } from "@/components/share-button"
 import MapView from "@/components/map-view"
 import { StarRating } from "@/components/star-rating"
 
@@ -54,9 +55,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
                         <span className="hover:text-white transition-colors cursor-pointer">{listing.location_neighborhood}, {listing.location_city}, Ethiopia</span>
                     </div>
                     <div className="flex gap-4">
-                        <div className="flex items-center gap-2 hover:bg-white/5 px-4 py-2 rounded-xl cursor-pointer transition-all font-bold text-white border border-white/5 bg-white/[0.02]">
-                            <Share size={16} /> Share
-                        </div>
+                        <ShareButton />
                         <div className="flex items-center gap-2 hover:bg-white/5 px-4 py-2 rounded-xl cursor-pointer transition-all font-bold text-white border border-white/5 bg-white/[0.02]">
                             <HeartButton listingId={listing.id} /> Save
                         </div>

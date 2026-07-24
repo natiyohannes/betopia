@@ -51,41 +51,41 @@ export function SiteFooter() {
                     <div className="space-y-6">
                         <h5 className="font-black text-white uppercase tracking-widest text-xs">{t('footer_support')}</h5>
                         <ul className="space-y-4 font-medium">
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_help')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_safety')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_cancellation')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_covid')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_report')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_help')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_safety')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_cancellation')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_covid')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_report')}</a></li>
                         </ul>
                     </div>
                     <div className="space-y-6">
                         <h5 className="font-black text-white uppercase tracking-widest text-xs">{t('footer_hosting')}</h5>
                         <ul className="space-y-4 font-medium">
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_list_prop')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_aircover')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_hosting_res')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_forum')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_responsibly')}</a></li>
+                            <li><a href="/dashboard/create-listing" className="hover:text-white transition-colors">{t('footer_list_prop')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_aircover')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_hosting_res')}</a></li>
+                            <li><a href="/dashboard/messages" className="hover:text-white transition-colors">{t('footer_forum')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_responsibly')}</a></li>
                         </ul>
                     </div>
                     <div className="space-y-6">
                         <h5 className="font-black text-white uppercase tracking-widest text-xs">{t('footer_betopia')}</h5>
                         <ul className="space-y-4 font-medium">
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_newsroom')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_features')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_founders')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_careers')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_investors')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_newsroom')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_features')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_founders')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_careers')}</a></li>
+                            <li><a href="/about" className="hover:text-white transition-colors">{t('footer_investors')}</a></li>
                         </ul>
                     </div>
                     <div className="space-y-6">
                         <h5 className="font-black text-white uppercase tracking-widest text-xs">{t('footer_regions')}</h5>
                         <ul className="space-y-4 font-medium">
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_addis')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_hawassa')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_bahirdar')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_adama')}</a></li>
-                            <li><a href="#" className="hover:text-white transition-colors">{t('footer_more_cities')}</a></li>
+                            <li><a href="/search?city=Addis Ababa" className="hover:text-white transition-colors">{t('footer_addis')}</a></li>
+                            <li><a href="/search?city=Hawassa" className="hover:text-white transition-colors">{t('footer_hawassa')}</a></li>
+                            <li><a href="/search?city=Bahir Dar" className="hover:text-white transition-colors">{t('footer_bahirdar')}</a></li>
+                            <li><a href="/search?city=Adama" className="hover:text-white transition-colors">{t('footer_adama')}</a></li>
+                            <li><a href="/search" className="hover:text-white transition-colors">{t('footer_more_cities')}</a></li>
                         </ul>
                     </div>
                 </div>
@@ -94,9 +94,9 @@ export function SiteFooter() {
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-8 font-medium">
                         <span className="text-neutral-500">{t('footer_copyright')}</span>
                         <div className="flex gap-4">
-                            <a href="#" className="hover:text-white transition-colors">{t('footer_privacy')}</a>
-                            <a href="#" className="hover:text-white transition-colors">{t('footer_terms')}</a>
-                            <a href="#" className="hover:text-white transition-colors">{t('footer_sitemap')}</a>
+                            <a href="/about" className="hover:text-white transition-colors">{t('footer_privacy')}</a>
+                            <a href="/about" className="hover:text-white transition-colors">{t('footer_terms')}</a>
+                            <a href="/search" className="hover:text-white transition-colors">{t('footer_sitemap')}</a>
                         </div>
                     </div>
                     <div className="flex gap-8 font-bold text-white">

@@ -24,7 +24,21 @@ async function getListings(searchParams: { [key: string]: string | undefined }) 
     if (searchParams.city) {
         query = query.ilike('location_city', `%${searchParams.city}%`)
     }
-    // Add other filters...
+    if (searchParams.type) {
+        query = query.ilike('property_type', `%${searchParams.type}%`)
+    }
+    if (searchParams.minPrice) {
+        const minP = parseFloat(searchParams.minPrice)
+        if (!isNaN(minP)) query = query.gte('price', minP)
+    }
+    if (searchParams.maxPrice) {
+        const maxP = parseFloat(searchParams.maxPrice)
+        if (!isNaN(maxP)) query = query.lte('price', maxP)
+    }
+    if (searchParams.beds) {
+        const bedrooms = parseInt(searchParams.beds)
+        if (!isNaN(bedrooms)) query = query.gte('bedrooms', bedrooms)
+    }
 
     if (searchParams.sort === 'highest_rating') {
         query = query.order('average_rating', { ascending: false }).order('created_at', { ascending: false })
